@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Modules\Billing\Contracts\EntitlementServiceInterface;
+use App\Modules\Export\Actions\GeneratePdfAction;
 use App\Modules\Projects\Models\Project;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -13,7 +14,8 @@ use ZipArchive;
 class ExportController extends Controller
 {
     public function __construct(
-        protected EntitlementServiceInterface $entitlements
+        protected EntitlementServiceInterface $entitlements,
+        protected GeneratePdfAction $generatePdfAction
     ) {}
 
     public function downloadPackage(Request $request, Project $project): StreamedResponse
@@ -63,10 +65,13 @@ class ExportController extends Controller
     {
         $this->authorize('view', $project);
 
+        $cleanPdf = $this->entitlements->can($request->user(), 'export.pdf.clean');
+        $pdf = $this->generatePdfAction->execute($project, $cleanPdf);
+
         $filename = 'forge-' . strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $project->title)) . '-blueprint.pdf';
 
-        return response()->streamDownload(function () use ($project) {
-            echo "%PDF-1.4\n% FORGE Intelligence Report\n% {$project->title}\n%%EOF";
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf->output();
         }, $filename, [
             'Content-Type' => 'application/pdf',
         ]);

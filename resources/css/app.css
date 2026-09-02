@@ -73,6 +73,7 @@
         --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
     }
 
+    html.dark,
     [data-theme="dark"] {
         --color-surface-primary: #0f1117;
         --color-surface-secondary: #161922;
@@ -134,6 +135,7 @@
     color: var(--color-growth-700);
     border: 1px solid var(--color-growth-200);
 }
+html.dark .growth-badge,
 [data-theme="dark"] .growth-badge {
     background-color: rgba(16, 185, 129, 0.15);
     color: var(--color-growth-400);

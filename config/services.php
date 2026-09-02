@@ -35,4 +35,22 @@ return [
         ],
     ],
 
+    'stripe' => [
+        'key' => env('STRIPE_KEY'),
+        'secret' => env('STRIPE_SECRET'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+    ],
+
+    'anthropic' => [
+        'key' => env('ANTHROPIC_API_KEY'),
+    ],
+
+    'openai' => [
+        'key' => env('OPENAI_API_KEY'),
+    ],
+
+    'tavily' => [
+        'key' => env('TAVILY_API_KEY'),
+    ],
+
 ];

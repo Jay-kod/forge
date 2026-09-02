@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Modules\AI\DTOs\AIRequest;
-use App\Modules\AI\Enums\WorkloadClass;
-use App\Modules\AI\Services\AIOrchestrator;
+use App\Modules\Product\Actions\ExecuteStageAction;
 use App\Modules\Product\Models\WorkflowStage;
 use App\Modules\Projects\Models\Project;
 use Illuminate\Http\RedirectResponse;
@@ -15,58 +13,14 @@ use Illuminate\Http\Request;
 class WorkflowController extends Controller
 {
     public function __construct(
-        protected AIOrchestrator $ai
+        protected ExecuteStageAction $executeStageAction
     ) {}
 
     public function advance(Request $request, Project $project, WorkflowStage $stage): RedirectResponse
     {
         $this->authorize('update', $project);
 
-        // Run AI intelligence for this stage if needed
-        $stageContent = $stage->content;
-
-        if (empty($stageContent)) {
-            $aiRequest = new AIRequest(
-                user: $request->user(),
-                prompt: "Analyze {$stage->stage_type->value} for project: {$project->title}. Context: {$project->description}",
-                operationType: "stage.{$stage->stage_type->value}",
-                workloadClass: match ($stage->stage_type->value) {
-                    'understanding', 'discovery' => WorkloadClass::STANDARD,
-                    'research', 'competitors', 'challenge', 'strategy' => WorkloadClass::DEEP,
-                    'prd', 'architecture', 'package' => WorkloadClass::DEEP,
-                    default => WorkloadClass::STANDARD,
-                },
-                projectId: $project->id
-            );
-
-            $aiResponse = $this->ai->execute($aiRequest);
-
-            $stage->update([
-                'status' => 'completed',
-                'content' => [
-                    'analysis' => $aiResponse->content,
-                    'model' => $aiResponse->model,
-                    'provider' => $aiResponse->provider,
-                ],
-                'completed_at' => now(),
-            ]);
-        }
-
-        // Activate next stage if exists
-        $nextStage = $project->workflow->stages()
-            ->where('order', '>', $stage->order)
-            ->orderBy('order')
-            ->first();
-
-        if ($nextStage) {
-            $nextStage->update([
-                'status' => 'active',
-                'started_at' => now(),
-            ]);
-            $project->update(['current_stage' => $nextStage->stage_type->value]);
-        } else {
-            $project->update(['status' => 'completed']);
-        }
+        $this->executeStageAction->execute($request->user(), $project, $stage);
 
         return redirect()->route('projects.show', $project)->with('success', "Stage {$stage->stage_type->label()} completed.");
     }

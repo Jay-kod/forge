@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Identity\Services;
 
 use App\Models\User;
+use App\Modules\Billing\Services\SubscriptionService;
 use App\Modules\Credits\Actions\GrantCreditsAction;
 use App\Modules\Identity\Contracts\AuthenticationServiceInterface;
 use App\Modules\Identity\Models\SocialAccount;
@@ -14,7 +15,8 @@ use Laravel\Socialite\Contracts\User as SocialiteUser;
 class AuthenticationService implements AuthenticationServiceInterface
 {
     public function __construct(
-        protected GrantCreditsAction $grantCreditsAction
+        protected GrantCreditsAction $grantCreditsAction,
+        protected SubscriptionService $subscriptionService
     ) {}
 
     public function findOrCreateSocialUser(string $provider, SocialiteUser $socialUser): User
@@ -50,15 +52,8 @@ class AuthenticationService implements AuthenticationServiceInterface
                 'provider_refresh' => $socialUser->refreshToken ?? null,
             ]);
 
-            // Initialize default credit account with free tier initial credits
-            if (!$user->creditAccount()->exists()) {
-                $this->grantCreditsAction->execute(
-                    user: $user,
-                    amount: 25,
-                    referenceType: 'signup_bonus',
-                    description: 'Initial welcome credits grant'
-                );
-            }
+            // Auto-provision Free Explorer plan and welcome credits
+            $this->subscriptionService->provisionFreePlan($user);
 
             return $user;
         });

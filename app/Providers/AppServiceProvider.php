@@ -26,12 +26,20 @@ class AppServiceProvider extends ServiceProvider
             \App\Modules\Projects\Services\ClassificationService::class
         );
 
+        $this->app->singleton(
+            \App\Modules\Research\Contracts\WebSearchProviderInterface::class,
+            \App\Modules\Research\Services\WebSearchService::class
+        );
+
+        $this->app->singleton(\App\Modules\AI\Services\AIOutputValidator::class);
+
         $this->app->singleton(\App\Modules\AI\Services\AIOrchestrator::class, function ($app) {
             $orchestrator = new \App\Modules\AI\Services\AIOrchestrator(
                 $app->make(\App\Modules\Credits\Contracts\CreditServiceInterface::class),
                 $app->make(\Psr\Log\LoggerInterface::class)
             );
             $orchestrator->registerProvider(new \App\Modules\AI\Providers\AnthropicProvider());
+            $orchestrator->registerProvider(new \App\Modules\AI\Providers\OpenAIProvider());
             return $orchestrator;
         });
     }

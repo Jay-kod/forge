@@ -40,7 +40,11 @@ class CreateProjectAction
             }
         }
 
-        return DB::transaction(function () use ($user, $userInput, $title, $mode) {
+        if ($mode === WorkflowMode::AUTOMATIC && !$this->entitlements->can($user, 'workflow.automatic')) {
+            throw new RuntimeException('Upgraded plan required for automatic workflow execution.');
+        }
+
+        $project = DB::transaction(function () use ($user, $userInput, $title, $mode) {
             // 2. Classify situation
             $classification = $this->classificationService->classify($userInput);
 
@@ -108,6 +112,12 @@ class CreateProjectAction
 
             return $project;
         });
+
+        if ($mode === WorkflowMode::AUTOMATIC) {
+            \App\Modules\Product\Jobs\RunAutomaticWorkflowJob::dispatch($project);
+        }
+
+        return $project;
     }
 
     protected function deriveTitle(string $input, string $defaultLabel): string

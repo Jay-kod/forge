@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\ExportController;
@@ -45,7 +46,18 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/projects/{project}/stages/{stage}/approve', [WorkflowController::class, 'approve'])->name('workflow.approve');
     Route::post('/projects/{project}/stages/{stage}/decide', [WorkflowController::class, 'decide'])->name('workflow.decide');
 
+    // Billing & Subscriptions
+    Route::post('/billing/checkout', [BillingController::class, 'checkout'])->name('billing.checkout');
+    Route::get('/billing/portal', [BillingController::class, 'portal'])->name('billing.portal');
+
     // Exports
     Route::get('/projects/{project}/export/package', [ExportController::class, 'downloadPackage'])->name('export.package');
     Route::get('/projects/{project}/export/pdf', [ExportController::class, 'downloadPdf'])->name('export.pdf');
+
+    // Admin Panel (Admin role only)
+    Route::middleware(['admin'])->prefix('admin')->group(function () {
+        Route::get('/', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+        Route::post('/users/{user}/credits', [AdminController::class, 'grantCredits'])->name('admin.users.credits');
+        Route::post('/users/{user}/role', [AdminController::class, 'updateRole'])->name('admin.users.role');
+    });
 });

@@ -1,68 +1,55 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { ref } from 'vue';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import type { SharedProps } from '@/types';
 
-defineProps<{
-    plans?: any[];
-    currentSubscription?: any;
+interface Plan {
+    id: number;
+    slug: string;
+    name: string;
+    price_monthly: number | string;
+    price_annual: number | string;
+    credits_monthly: number;
+    features: string[];
+    is_active: boolean;
+}
+
+const props = defineProps<{
+    plans?: Plan[];
+    currentSubscription?: {
+        id: number;
+        status: string;
+        plan?: Plan;
+    } | null;
 }>();
 
-const tiers = [
-    {
-        name: 'Free Explorer',
-        price: '$0',
-        period: 'forever',
-        credits: '25 credits / month',
-        description: 'Ideal for testing ideas and exploring the FORGE intelligence loop.',
-        features: [
-            '1 active workspace',
-            'Basic situation classification',
-            'Core market discovery report',
-            'Basic PRD generator',
-            'Watermarked PDF export',
-            'Community support',
-        ],
-        cta: 'Current Plan',
-        highlight: false,
-    },
-    {
-        name: 'Pro Builder',
-        price: '$39',
-        period: 'per month',
-        credits: '200 credits / month',
-        description: 'For serious founders, vibe coders, and developers seeking validated strategy & architecture.',
-        features: [
-            'Unlimited active workspaces',
-            'Deep multi-source market research',
-            'Full competitor intelligence matrix',
-            'Evidence-linked PRD & Architecture',
-            'AI Development Package export (AGENTS.md, CLAUDE.md)',
-            'Clean PDF blueprint exports',
-            'Continuous opportunity tracking',
-            'Priority AI reasoning models',
-        ],
-        cta: 'Upgrade to Pro',
-        highlight: true,
-    },
-    {
-        name: 'Business & Team',
-        price: '$99',
-        period: 'per month',
-        credits: '500 credits / month',
-        description: 'For startups, digital agencies, and product teams building multiple ventures.',
-        features: [
-            'Everything in Pro Builder',
-            'Up to 5 collaborative team seats',
-            'Shared workspace & credit pools',
-            'Website & codebase audit workflows',
-            'Digital transformation roadmaps',
-            'Export to GitHub repositories',
-            'Priority email & Slack support',
-        ],
-        cta: 'Upgrade to Business',
-        highlight: false,
-    },
-];
+const page = usePage<SharedProps>();
+const billingCycle = ref<'monthly' | 'annual'>('monthly');
+const isCheckingOut = ref<number | null>(null);
+
+const handleCheckout = (plan: Plan) => {
+    if (!page.props.auth.user) {
+        router.get(route('login'));
+        return;
+    }
+
+    if (plan.slug === 'free') {
+        return;
+    }
+
+    isCheckingOut.value = plan.id;
+    router.post(route('billing.checkout'), {
+        plan_id: plan.id,
+        billing_cycle: billingCycle.value,
+    }, {
+        onFinish: () => { isCheckingOut.value = null; },
+    });
+};
+
+const openPortal = () => {
+    window.location.href = route('billing.portal');
+};
 
 const creditPacks = [
     { credits: 50, price: '$5', perCredit: '$0.10 / credit' },
@@ -76,66 +63,135 @@ const creditPacks = [
         <Head title="Plans & Credits — FORGE" />
 
         <!-- Header -->
-        <div class="text-center max-w-3xl mx-auto mb-12">
+        <div class="text-center max-w-3xl mx-auto mb-10">
             <span class="text-xs font-mono font-bold uppercase tracking-widest text-indigo-400 mb-2 block">
                 Transparent SaaS Billing
             </span>
             <h1 class="text-3xl sm:text-4xl font-display font-extrabold tracking-tight text-text-primary mb-3">
                 Plans Control Access. Credits Control Intelligence.
             </h1>
-            <p class="text-sm text-text-secondary max-w-xl mx-auto">
-                No hidden costs. Every expensive AI operation displays estimated credits before execution with automatic failure refunds.
+            <p class="text-xs sm:text-sm text-text-secondary max-w-xl mx-auto leading-relaxed">
+                No hidden surprises. Every AI operation displays estimated credits before execution with guaranteed atomic refunds on failure.
             </p>
+
+            <!-- Billing Cycle Switcher -->
+            <div class="inline-flex items-center p-1 rounded-xl bg-surface-secondary border border-primary mt-6">
+                <button
+                    type="button"
+                    @click="billingCycle = 'monthly'"
+                    class="px-4 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all"
+                    :class="billingCycle === 'monthly' ? 'bg-surface-elevated text-text-primary shadow-xs border border-primary' : 'text-text-tertiary hover:text-text-primary'"
+                >
+                    Monthly Billing
+                </button>
+                <button
+                    type="button"
+                    @click="billingCycle = 'annual'"
+                    class="px-4 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all flex items-center gap-1.5"
+                    :class="billingCycle === 'annual' ? 'bg-surface-elevated text-text-primary shadow-xs border border-primary' : 'text-text-tertiary hover:text-text-primary'"
+                >
+                    <span>Annual Billing</span>
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                        Save 20%
+                    </span>
+                </button>
+            </div>
+
+            <!-- Manage Subscription Button if active paid user -->
+            <div v-if="currentSubscription?.plan && currentSubscription.plan.slug !== 'free'" class="mt-4">
+                <button
+                    @click="openPortal"
+                    class="text-xs font-mono text-indigo-400 hover:underline inline-flex items-center gap-1"
+                >
+                    <span>Manage Active Subscription (Stripe Portal) ↗</span>
+                </button>
+            </div>
         </div>
 
         <!-- Plan Cards Matrix -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-16">
             <div
-                v-for="tier in tiers"
-                :key="tier.name"
+                v-for="plan in (plans || [])"
+                :key="plan.id"
                 class="flex flex-col bg-surface-secondary border rounded-2xl p-8 relative transition-all"
-                :class="tier.highlight ? 'border-indigo-500 shadow-xl ring-1 ring-indigo-500/30' : 'border-primary shadow-md'"
+                :class="plan.slug === 'pro' ? 'border-indigo-500 shadow-xl ring-1 ring-indigo-500/30' : 'border-primary shadow-md'"
             >
-                <div v-if="tier.highlight" class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-indigo-600 text-white text-[10px] font-mono font-bold uppercase tracking-wider">
+                <!-- Popular Badge -->
+                <div
+                    v-if="plan.slug === 'pro'"
+                    class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-indigo-600 text-white text-[10px] font-mono font-bold uppercase tracking-wider shadow-sm"
+                >
                     Most Popular
                 </div>
 
-                <h2 class="text-lg font-display font-bold text-text-primary mb-1">{{ tier.name }}</h2>
-                <p class="text-xs text-text-secondary mb-6 min-h-[32px]">{{ tier.description }}</p>
-
-                <div class="mb-4">
-                    <span class="text-4xl font-display font-extrabold text-text-primary">{{ tier.price }}</span>
-                    <span class="text-xs text-text-tertiary ml-1 font-mono">/ {{ tier.period }}</span>
+                <!-- Current Plan Badge -->
+                <div
+                    v-if="currentSubscription?.plan?.id === plan.id"
+                    class="mb-2 inline-flex items-center gap-1 self-start px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                >
+                    ✓ Current Plan
                 </div>
 
-                <div class="px-3 py-1.5 rounded-lg bg-surface-primary border border-primary text-xs font-mono text-indigo-400 font-semibold mb-6 flex items-center gap-2">
+                <h2 class="text-xl font-display font-bold text-text-primary mb-1">{{ plan.name }}</h2>
+
+                <!-- Price -->
+                <div class="my-4">
+                    <span class="text-4xl font-display font-extrabold text-text-primary">
+                        ${{ billingCycle === 'annual' ? plan.price_annual : plan.price_monthly }}
+                    </span>
+                    <span class="text-xs text-text-tertiary ml-1 font-mono">
+                        / {{ billingCycle === 'annual' ? 'year' : 'month' }}
+                    </span>
+                </div>
+
+                <!-- Credits Badge -->
+                <div class="px-3 py-1.5 rounded-xl bg-surface-primary border border-primary text-xs font-mono text-indigo-400 font-bold mb-6 flex items-center gap-2">
                     <span>⚡</span>
-                    <span>{{ tier.credits }}</span>
+                    <span>{{ plan.credits_monthly }} Credits / month</span>
                 </div>
 
                 <!-- Features List -->
                 <ul class="space-y-3 text-xs text-text-secondary mb-8 flex-1">
-                    <li v-for="feat in tier.features" :key="feat" class="flex items-start gap-2">
+                    <li v-for="feat in plan.features" :key="feat" class="flex items-start gap-2">
                         <span class="text-emerald-400 font-bold shrink-0">✓</span>
-                        <span>{{ feat }}</span>
+                        <span class="leading-relaxed">{{ feat }}</span>
                     </li>
                 </ul>
 
+                <!-- CTA Button -->
                 <button
-                    class="w-full py-2.5 rounded-xl text-xs font-bold transition-all shadow-md"
-                    :class="tier.highlight ? 'brand-button' : 'bg-surface-tertiary border border-primary hover:bg-surface-elevated text-text-primary'"
+                    v-if="currentSubscription?.plan?.id === plan.id"
+                    disabled
+                    class="w-full py-2.5 rounded-xl text-xs font-mono font-bold bg-surface-tertiary text-text-tertiary border border-primary cursor-default"
                 >
-                    {{ tier.cta }}
+                    Current Plan Active
+                </button>
+                <button
+                    v-else-if="plan.slug === 'free'"
+                    disabled
+                    class="w-full py-2.5 rounded-xl text-xs font-mono font-bold bg-surface-tertiary text-text-tertiary border border-primary"
+                >
+                    Included Default
+                </button>
+                <button
+                    v-else
+                    @click="handleCheckout(plan)"
+                    :disabled="isCheckingOut === plan.id"
+                    class="w-full py-2.5 rounded-xl text-xs font-bold transition-all shadow-md"
+                    :class="plan.slug === 'pro' ? 'brand-button' : 'bg-surface-tertiary border border-primary hover:bg-surface-elevated text-text-primary'"
+                >
+                    <span v-if="isCheckingOut === plan.id">Connecting to Stripe...</span>
+                    <span v-else>Upgrade to {{ plan.name }}</span>
                 </button>
             </div>
         </div>
 
         <!-- Credit Top-Ups Section -->
-        <div class="max-w-4xl mx-auto bg-surface-secondary border border-primary rounded-2xl p-8">
+        <div class="max-w-4xl mx-auto bg-surface-secondary border border-primary rounded-2xl p-8 shadow-sm">
             <div class="text-center mb-6">
                 <h2 class="text-xl font-display font-bold text-text-primary mb-1">Need Extra AI Credits?</h2>
                 <p class="text-xs text-text-secondary">
-                    Purchase on-demand credit packs that never expire while your plan remains active.
+                    Purchase on-demand credit packs for deep intelligence workloads without changing your tier.
                 </p>
             </div>
 
@@ -150,8 +206,8 @@ const creditPacks = [
                     </span>
                     <span class="text-lg font-bold text-indigo-400 mb-1">{{ pack.price }}</span>
                     <span class="text-[11px] font-mono text-text-tertiary mb-4">{{ pack.perCredit }}</span>
-                    <button class="w-full py-1.5 rounded-lg bg-surface-tertiary hover:bg-surface-elevated border border-primary text-xs font-semibold transition-colors text-text-primary">
-                        Add Credits
+                    <button class="w-full py-1.5 rounded-lg bg-surface-tertiary hover:bg-surface-elevated border border-primary text-xs font-mono font-semibold transition-colors text-text-primary">
+                        + Add Credits
                     </button>
                 </div>
             </div>

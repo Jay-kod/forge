@@ -84,6 +84,10 @@ class AuthController extends Controller
             ]);
         }
 
+        if (!$user->subscription()->exists()) {
+            app(\App\Modules\Billing\Services\SubscriptionService::class)->provisionFreePlan($user);
+        }
+
         Auth::login($user, remember: true);
         $request->session()->regenerate();
 

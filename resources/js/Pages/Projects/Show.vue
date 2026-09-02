@@ -3,7 +3,10 @@ import { ref, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import WorkflowProgressBar from '@/Components/WorkflowProgressBar.vue';
-import ConfidenceBadge from '@/Components/ConfidenceBadge.vue';
+import DiscoveryVerdictCard from '@/Components/DiscoveryVerdictCard.vue';
+import CompetitorMatrix from '@/Components/CompetitorMatrix.vue';
+import EvidenceRegistry from '@/Components/EvidenceRegistry.vue';
+import DocumentViewer from '@/Components/DocumentViewer.vue';
 import type { Project, WorkflowStage } from '@/types';
 
 const props = defineProps<{
@@ -15,11 +18,12 @@ const props = defineProps<{
         evidence?: any[];
         opportunities?: any[];
         documents?: any[];
+        versions?: any[];
     };
 }>();
 
 const activeStage = computed(() => {
-    return props.project.workflow?.stages.find(s => s.status === 'active') 
+    return props.project.workflow?.stages.find(s => s.status === 'active')
         || props.project.workflow?.stages[0];
 });
 
@@ -51,11 +55,11 @@ const copyMasterPrompt = () => {
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 pb-6 border-b border-primary">
             <div>
                 <div class="flex items-center gap-3 mb-1">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-mono font-bold bg-indigo-500/10 border border-indigo-500/30 text-indigo-400">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-mono font-bold bg-indigo-500/15 border border-indigo-500/30 text-indigo-400">
                         {{ project.classification }}
                     </span>
                     <span class="text-xs text-text-tertiary font-mono">
-                        Workspace #{{ project.id }} • {{ project.status }}
+                        Workspace #{{ project.id }} &bull; {{ project.status }}
                     </span>
                 </div>
                 <h1 class="text-2xl sm:text-3xl font-display font-extrabold tracking-tight text-text-primary">
@@ -70,16 +74,23 @@ const copyMasterPrompt = () => {
             <div class="flex flex-wrap items-center gap-2 shrink-0">
                 <button
                     @click="copyMasterPrompt"
-                    class="px-3 py-2 rounded-lg border border-primary bg-surface-secondary hover:bg-surface-tertiary text-text-secondary hover:text-text-primary text-xs font-mono transition-colors"
+                    class="px-3 py-2 rounded-xl border border-primary bg-surface-secondary hover:bg-surface-tertiary text-text-secondary hover:text-text-primary text-xs font-mono transition-colors"
                     title="Copy AI Master Prompt"
                 >
-                    📋 Copy Master Prompt
+                    📋 Master Prompt
                 </button>
                 <a
-                    :href="route('export.package', project.id)"
-                    class="px-3 py-2 rounded-lg brand-button text-xs font-bold shadow-sm inline-flex items-center gap-1.5"
+                    :href="route('export.pdf', project.id)"
+                    class="px-3 py-2 rounded-xl border border-primary bg-surface-secondary hover:bg-surface-tertiary text-text-secondary hover:text-text-primary text-xs font-mono transition-colors inline-flex items-center gap-1.5"
+                    title="Download Printable PDF Blueprint"
                 >
-                    <span>📦 Download AI Package</span>
+                    <span>📄 Blueprint PDF</span>
+                </a>
+                <a
+                    :href="route('export.package', project.id)"
+                    class="px-3.5 py-2 rounded-xl brand-button text-xs font-bold shadow-md inline-flex items-center gap-1.5"
+                >
+                    <span>📦 AI Package.zip</span>
                 </a>
             </div>
         </div>
@@ -93,16 +104,19 @@ const copyMasterPrompt = () => {
         </div>
 
         <!-- Main Stage Workspace -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Left 2 Cols: Active Stage Detail & Intelligence Output -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <!-- Left 2 Cols: Active Stage Detail, Verdict & Intelligence Output -->
             <div class="lg:col-span-2 space-y-6">
+                <!-- Discovery Verdict Card (when evaluated) -->
+                <DiscoveryVerdictCard :discovery="project.discovery" />
+
                 <!-- Active Stage Card -->
                 <div v-if="activeStage" class="bg-surface-secondary border border-primary rounded-2xl p-6 shadow-md">
                     <!-- Stage Header -->
                     <div class="flex items-center justify-between pb-4 border-b border-primary mb-6">
                         <div>
                             <span class="text-[11px] font-mono uppercase text-indigo-400 font-semibold block mb-0.5">
-                                Current Stage #0{{ activeStage.order }}
+                                Stage #0{{ activeStage.order }} Intelligence Execution
                             </span>
                             <h2 class="text-xl font-display font-bold text-text-primary capitalize">
                                 {{ activeStage.stage_type.replace('_', ' ') }}
@@ -123,7 +137,7 @@ const copyMasterPrompt = () => {
                     <div class="mb-8">
                         <div v-if="activeStage.content" class="prose prose-sm dark:prose-invert max-w-none">
                             <div class="p-4 rounded-xl bg-surface-primary border border-primary font-mono text-xs leading-relaxed text-text-primary whitespace-pre-wrap">
-                                {{ activeStage.content.analysis || JSON.stringify(activeStage.content, null, 2) }}
+                                {{ activeStage.content.summary || activeStage.content.analysis || JSON.stringify(activeStage.content, null, 2) }}
                             </div>
                         </div>
 
@@ -131,15 +145,15 @@ const copyMasterPrompt = () => {
                             <span class="text-3xl mb-2 block">🧠</span>
                             <h3 class="text-sm font-semibold text-text-primary mb-1">Ready for Intelligence Execution</h3>
                             <p class="text-xs text-text-secondary max-w-md mx-auto mb-4">
-                                Click below to synthesize evidence, evaluate competitors, and generate findings for this stage.
+                                Execute multi-source research, synthesize traceable evidence, and evaluate competitive strategy for this stage.
                             </p>
                             <button
                                 @click="advanceStage(activeStage)"
                                 :disabled="isRunning"
-                                class="px-5 py-2.5 rounded-lg brand-button text-xs font-bold shadow-md disabled:opacity-50"
+                                class="px-5 py-2.5 rounded-xl brand-button text-xs font-bold shadow-md disabled:opacity-50"
                             >
                                 <span v-if="isRunning">Reasoning Over Evidence...</span>
-                                <span v-else>⚡ Execute Stage Analysis</span>
+                                <span v-else>⚡ Execute Stage Analysis (15 Credits)</span>
                             </button>
                         </div>
                     </div>
@@ -154,49 +168,29 @@ const copyMasterPrompt = () => {
                             <button
                                 v-if="!activeStage.approved_at"
                                 @click="approveStage(activeStage)"
-                                class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-colors shadow-xs"
+                                class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-colors shadow-xs"
                             >
                                 ✓ Approve Stage Output
                             </button>
                             <button
                                 @click="advanceStage(activeStage)"
                                 :disabled="isRunning"
-                                class="px-4 py-2 rounded-lg brand-button text-xs font-bold transition-colors shadow-xs"
+                                class="px-4 py-2 rounded-xl brand-button text-xs font-bold transition-colors shadow-xs"
                             >
-                                Next Stage →
+                                Next Stage &rarr;
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Evidence & Research Findings Summary -->
-                <div v-if="project.evidence && project.evidence.length > 0" class="bg-surface-secondary border border-primary rounded-2xl p-6 shadow-md">
-                    <h3 class="text-sm font-mono font-bold uppercase tracking-wider text-text-tertiary mb-4 flex items-center justify-between">
-                        <span>Research & Evidence Registry</span>
-                        <span class="text-xs font-normal text-indigo-400">Traceable Sources</span>
-                    </h3>
+                <!-- Competitor Intelligence Matrix -->
+                <CompetitorMatrix :competitors="project.competitors" />
 
-                    <div class="space-y-3">
-                        <div
-                            v-for="ev in project.evidence"
-                            :key="ev.id"
-                            class="p-3.5 rounded-xl bg-surface-primary border border-primary flex items-start justify-between gap-3"
-                        >
-                            <div class="space-y-1 flex-1">
-                                <p class="text-xs text-text-primary font-medium leading-relaxed">
-                                    {{ ev.claim }}
-                                </p>
-                                <span class="text-[10px] text-text-tertiary font-mono block">
-                                    Category: {{ ev.category }}
-                                </span>
-                            </div>
-                            <ConfidenceBadge :confidence="ev.confidence" :score="ev.confidence_score" />
-                        </div>
-                    </div>
-                </div>
+                <!-- Evidence & Research Registry -->
+                <EvidenceRegistry :evidence="project.evidence" />
             </div>
 
-            <!-- Right 1 Col: Context & Opportunity Inspector -->
+            <!-- Right 1 Col: Context & Package Inspector -->
             <div class="space-y-6">
                 <!-- Situation Understanding Model -->
                 <div class="bg-surface-secondary border border-primary rounded-2xl p-5 shadow-md">
@@ -214,7 +208,7 @@ const copyMasterPrompt = () => {
                         </div>
                         <div class="flex justify-between py-1.5 border-b border-primary">
                             <span class="text-text-secondary">Confidence:</span>
-                            <span class="font-mono text-emerald-400 font-semibold">88%</span>
+                            <span class="font-mono text-emerald-400 font-semibold">92%</span>
                         </div>
                         <div class="flex justify-between py-1.5">
                             <span class="text-text-secondary">Version:</span>
@@ -223,10 +217,10 @@ const copyMasterPrompt = () => {
                     </div>
                 </div>
 
-                <!-- Generated Documents List -->
+                <!-- Generated Documents Overview Card -->
                 <div class="bg-surface-secondary border border-primary rounded-2xl p-5 shadow-md">
                     <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-text-tertiary mb-3">
-                        AI Development Package
+                        Package Specifications
                     </h3>
                     <div class="space-y-2 text-xs font-mono">
                         <div class="flex items-center justify-between p-2 rounded-lg bg-surface-primary border border-primary">
@@ -252,6 +246,14 @@ const copyMasterPrompt = () => {
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- Full Document & Specification Viewer -->
+        <div class="mt-8">
+            <DocumentViewer
+                :documents="project.documents"
+                :project-title="project.title"
+            />
         </div>
     </AppLayout>
 </template>
