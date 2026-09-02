@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 import ThemeToggle from '@/Components/ThemeToggle.vue';
 import ReferralModal from '@/Components/ReferralModal.vue';
+import NotificationCenter from '@/Components/Notifications/NotificationCenter.vue';
 import type { SharedProps } from '@/types';
 
 const page = usePage<SharedProps>();
@@ -77,6 +78,9 @@ const logout = () => {
                     >
                         <span>🎁 Invite & Earn</span>
                     </button>
+
+                    <!-- Notification Center -->
+                    <NotificationCenter v-if="page.props.auth.user" />
 
                     <!-- Theme Toggle Component -->
                     <ThemeToggle />

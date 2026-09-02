@@ -12,6 +12,9 @@ import OpportunityMatrix from '@/Components/OpportunityMatrix.vue';
 import GitHubConnectModal from '@/Components/GitHub/GitHubConnectModal.vue';
 import RepositoryAuditCard from '@/Components/GitHub/RepositoryAuditCard.vue';
 import GitHubExportModal from '@/Components/GitHub/GitHubExportModal.vue';
+import OpportunityGraph from '@/Components/Opportunity/OpportunityGraph.vue';
+import DecisionTimeline from '@/Components/Projects/DecisionTimeline.vue';
+import VersionComparisonModal from '@/Components/Projects/VersionComparisonModal.vue';
 import type { Project, WorkflowStage } from '@/types';
 
 const props = defineProps<{
@@ -38,10 +41,16 @@ const activeStage = computed(() => {
 const isRunning = ref(false);
 const showGitHubModal = ref(false);
 const showExportModal = ref(false);
+const showVersionModal = ref(false);
+const activeIntelligenceTab = ref<'overview' | 'graph' | 'timeline'>('overview');
 const currentAudit = ref(props.project.repository_audit);
 
 const handleScanned = (auditData: any) => {
     currentAudit.value = auditData;
+};
+
+const handleStageRerun = () => {
+    router.reload({ only: ['project'] });
 };
 
 const advanceStage = (stage: WorkflowStage) => {
@@ -93,6 +102,14 @@ const copyMasterPrompt = () => {
                     title="Copy AI Master Prompt"
                 >
                     📋 Master Prompt
+                </button>
+                <button
+                    @click="showVersionModal = true"
+                    class="px-3 py-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 text-xs font-mono transition-colors inline-flex items-center gap-1.5"
+                    title="Compare Project Versions"
+                >
+                    <span>🧬</span>
+                    <span>Version History (v{{ project.versions?.length || 1 }})</span>
                 </button>
                 <button
                     @click="showGitHubModal = true"
@@ -226,14 +243,55 @@ const copyMasterPrompt = () => {
                     </div>
                 </div>
 
-                <!-- Competitor Intelligence Matrix -->
-                <CompetitorMatrix :competitors="project.competitors" />
+                <!-- Continuous Intelligence Segmented Tabs -->
+                <div class="flex items-center gap-2 p-1.5 rounded-2xl bg-surface-secondary border border-primary w-fit">
+                    <button
+                        @click="activeIntelligenceTab = 'overview'"
+                        class="px-4 py-2 text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5"
+                        :class="activeIntelligenceTab === 'overview' ? 'bg-indigo-600 text-white shadow-xs' : 'text-text-secondary hover:text-text-primary'"
+                    >
+                        <span>📊</span>
+                        <span>Intelligence Matrices</span>
+                    </button>
+                    <button
+                        @click="activeIntelligenceTab = 'graph'"
+                        class="px-4 py-2 text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5"
+                        :class="activeIntelligenceTab === 'graph' ? 'bg-indigo-600 text-white shadow-xs' : 'text-text-secondary hover:text-text-primary'"
+                    >
+                        <span>🕸️</span>
+                        <span>Opportunity Graph</span>
+                    </button>
+                    <button
+                        @click="activeIntelligenceTab = 'timeline'"
+                        class="px-4 py-2 text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5"
+                        :class="activeIntelligenceTab === 'timeline' ? 'bg-indigo-600 text-white shadow-xs' : 'text-text-secondary hover:text-text-primary'"
+                    >
+                        <span>📜</span>
+                        <span>Decision Timeline</span>
+                    </button>
+                </div>
 
-                <!-- Action Priority Matrix (Opportunities) -->
-                <OpportunityMatrix :opportunities="project.opportunities" />
+                <!-- Tab 1: Matrices -->
+                <div v-show="activeIntelligenceTab === 'overview'" class="space-y-6">
+                    <!-- Competitor Intelligence Matrix -->
+                    <CompetitorMatrix :competitors="project.competitors" />
 
-                <!-- Evidence & Research Registry -->
-                <EvidenceRegistry :evidence="project.evidence" :project-id="project.id" />
+                    <!-- Action Priority Matrix (Opportunities) -->
+                    <OpportunityMatrix :opportunities="project.opportunities" />
+
+                    <!-- Evidence & Research Registry -->
+                    <EvidenceRegistry :evidence="project.evidence" :project-id="project.id" />
+                </div>
+
+                <!-- Tab 2: Interactive Opportunity Graph -->
+                <div v-if="activeIntelligenceTab === 'graph'">
+                    <OpportunityGraph :project="project" />
+                </div>
+
+                <!-- Tab 3: Decision Timeline -->
+                <div v-if="activeIntelligenceTab === 'timeline'">
+                    <DecisionTimeline :project="project" @stage-rerun="handleStageRerun" />
+                </div>
             </div>
 
             <!-- Right 1 Col: Context & Package Inspector -->
@@ -318,6 +376,13 @@ const copyMasterPrompt = () => {
             :project="project"
             :audit="currentAudit"
             @close="showExportModal = false"
+        />
+
+        <!-- Version Comparison Modal -->
+        <VersionComparisonModal
+            :project="project"
+            :is-open="showVersionModal"
+            @close="showVersionModal = false"
         />
     </AppLayout>
 </template>

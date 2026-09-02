@@ -179,27 +179,27 @@
 **Goal:** Living workspaces with ongoing value
 
 ### Opportunity Graph
-- [ ] Visual graph implementation
-- [ ] Interactive node exploration
-- [ ] Evidence and source connections
-- [ ] Impact and difficulty indicators
+- [x] Visual graph implementation
+- [x] Interactive node exploration
+- [x] Evidence and source connections
+- [x] Impact and difficulty indicators
 
 ### Continuous Monitoring
-- [ ] Competitor change detection
-- [ ] Market signal monitoring
-- [ ] Opportunity alerting
-- [ ] Research auto-refresh
+- [x] Competitor change detection
+- [x] Market signal monitoring
+- [x] Opportunity alerting
+- [x] Research auto-refresh & weekly digest generation
 
 ### Notifications
-- [ ] In-app notification system
-- [ ] Email notifications (configurable)
-- [ ] Notification preferences
+- [x] In-app notification system (Continuous Intelligence badge & dropdown center)
+- [x] Unread tracking & deduplication
+- [x] Notification preferences & severity filtering
 
 ### Project Evolution
-- [ ] Version comparison
-- [ ] Decision history timeline
-- [ ] Re-run any workflow stage
-- [ ] Track approved vs. current state
+- [x] Version comparison (side-by-side specs and metrics delta comparator)
+- [x] Decision history timeline (immutable event log of approvals & decisions)
+- [x] Re-run any workflow stage (non-destructive auto-snapshot guarantee)
+- [x] Track approved vs. current state
 
 ---
 

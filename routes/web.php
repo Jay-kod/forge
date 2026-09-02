@@ -48,6 +48,18 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/projects/{project}/stages/{stage}/advance', [WorkflowController::class, 'advance'])->name('workflow.advance');
     Route::post('/projects/{project}/stages/{stage}/approve', [WorkflowController::class, 'approve'])->name('workflow.approve');
     Route::post('/projects/{project}/stages/{stage}/decide', [WorkflowController::class, 'decide'])->name('workflow.decide');
+    Route::post('/projects/{project}/stages/{stage}/rerun', [\App\Http\Controllers\ProjectVersionController::class, 'rerun'])->name('workflow.rerun');
+
+    // Project Versions & Decision Timeline
+    Route::get('/projects/{project}/versions', [\App\Http\Controllers\ProjectVersionController::class, 'index'])->name('projects.versions.index');
+    Route::get('/projects/{project}/versions/{v1}/diff/{v2}', [\App\Http\Controllers\ProjectVersionController::class, 'diff'])->name('projects.versions.diff');
+    Route::get('/projects/{project}/timeline', [\App\Http\Controllers\ProjectVersionController::class, 'timeline'])->name('projects.timeline');
+    Route::get('/projects/{project}/graph', [\App\Http\Controllers\OpportunityGraphController::class, 'show'])->name('projects.graph');
+
+    // In-App Alerts & Notifications
+    Route::get('/alerts', [\App\Http\Controllers\AlertController::class, 'index'])->name('alerts.index');
+    Route::post('/alerts/{alert}/read', [\App\Http\Controllers\AlertController::class, 'markRead'])->name('alerts.read');
+    Route::post('/alerts/read-all', [\App\Http\Controllers\AlertController::class, 'markAllRead'])->name('alerts.read_all');
 
     // Billing & Subscriptions
     Route::post('/billing/checkout', [BillingController::class, 'checkout'])->name('billing.checkout');
