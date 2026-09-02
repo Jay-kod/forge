@@ -63,6 +63,13 @@ const logout = () => {
                             BYOK
                         </Link>
                         <Link
+                            :href="route('privacy.index')"
+                            class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                            :class="route().current('privacy.*') ? 'bg-surface-elevated text-indigo-400 font-semibold shadow-xs border border-primary' : 'text-text-secondary hover:text-text-primary hover:bg-surface-tertiary'"
+                        >
+                            Privacy
+                        </Link>
+                        <Link
                             :href="route('pricing')"
                             class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
                             :class="route().current('pricing') ? 'bg-surface-elevated text-indigo-400 font-semibold shadow-xs border border-primary' : 'text-text-secondary hover:text-text-primary hover:bg-surface-tertiary'"
@@ -183,6 +190,13 @@ const logout = () => {
                         class="block px-3 py-2 rounded-lg text-xs font-semibold text-text-primary hover:bg-surface-tertiary"
                     >
                         🔐 BYOK Credentials
+                    </Link>
+                    <Link
+                        :href="route('privacy.index')"
+                        @click="isMobileMenuOpen = false"
+                        class="block px-3 py-2 rounded-lg text-xs font-semibold text-text-primary hover:bg-surface-tertiary"
+                    >
+                        🔒 Privacy & Data Portability
                     </Link>
                     <Link
                         :href="route('pricing')"

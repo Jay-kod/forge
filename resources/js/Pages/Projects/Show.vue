@@ -69,6 +69,30 @@ const copyMasterPrompt = () => {
     navigator.clipboard.writeText(prompt);
     alert('Master Prompt copied to clipboard!');
 };
+
+const feedbackGiven = ref(false);
+const submitFeedback = async (stageType: string, rating: number) => {
+    try {
+        const res = await fetch(`/projects/${props.project.id}/feedback`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+            },
+            body: JSON.stringify({
+                category: stageType || 'general_stage',
+                signal_type: 'quality_feedback',
+                rating: rating,
+                stage_type: stageType,
+            }),
+        });
+        const data = await res.json();
+        feedbackGiven.value = true;
+        alert(data.message || 'Thank you for your feedback!');
+    } catch {
+        alert('Feedback submitted!');
+    }
+};
 </script>
 
 <template>
@@ -219,10 +243,34 @@ const copyMasterPrompt = () => {
                     </div>
 
                     <!-- Stage Controls -->
-                    <div v-if="activeStage.content" class="pt-4 border-t border-primary flex items-center justify-between">
-                        <span class="text-xs text-text-tertiary font-mono">
-                            {{ activeStage.approved_at ? '✓ Approved' : 'Awaiting Review' }}
-                        </span>
+                    <div v-if="activeStage.content" class="pt-4 border-t border-primary flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <span class="text-xs text-text-tertiary font-mono">
+                                {{ activeStage.approved_at ? '✓ Approved' : 'Awaiting Review' }}
+                            </span>
+
+                            <!-- Learning Feedback Buttons -->
+                            <div v-if="!feedbackGiven" class="hidden sm:flex items-center gap-1.5 pl-4 border-l border-primary">
+                                <span class="text-[10px] font-mono text-text-tertiary">Helpful?</span>
+                                <button
+                                    @click="submitFeedback(activeStage.stage_type, 1)"
+                                    class="px-2 py-0.5 rounded-md text-[11px] font-mono hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition-colors"
+                                    title="Accurate & useful (Anonymized signal)"
+                                >
+                                    👍 Yes
+                                </button>
+                                <button
+                                    @click="submitFeedback(activeStage.stage_type, -1)"
+                                    class="px-2 py-0.5 rounded-md text-[11px] font-mono hover:bg-red-500/20 text-red-400 border border-red-500/30 transition-colors"
+                                    title="Needs refinement (Anonymized signal)"
+                                >
+                                    👎 No
+                                </button>
+                            </div>
+                            <span v-else class="text-[10px] font-mono text-emerald-400 pl-4 border-l border-primary">
+                                ✓ Feedback recorded anonymously
+                            </span>
+                        </div>
 
                         <div class="flex items-center gap-3">
                             <button

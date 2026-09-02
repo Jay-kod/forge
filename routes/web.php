@@ -55,6 +55,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/projects/{project}/versions/{v1}/diff/{v2}', [\App\Http\Controllers\ProjectVersionController::class, 'diff'])->name('projects.versions.diff');
     Route::get('/projects/{project}/timeline', [\App\Http\Controllers\ProjectVersionController::class, 'timeline'])->name('projects.timeline');
     Route::get('/projects/{project}/graph', [\App\Http\Controllers\OpportunityGraphController::class, 'show'])->name('projects.graph');
+    Route::post('/projects/{project}/feedback', [\App\Http\Controllers\LearningFeedbackController::class, 'store'])->name('projects.feedback');
 
     // In-App Alerts & Notifications
     Route::get('/alerts', [\App\Http\Controllers\AlertController::class, 'index'])->name('alerts.index');
@@ -81,6 +82,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/settings/byok', [\App\Http\Controllers\ByokController::class, 'index'])->name('byok.index');
     Route::post('/settings/byok', [\App\Http\Controllers\ByokController::class, 'store'])->name('byok.store');
     Route::delete('/settings/byok/{provider}', [\App\Http\Controllers\ByokController::class, 'destroy'])->name('byok.destroy');
+
+    // Privacy & Consent Governance
+    Route::get('/settings/privacy', [\App\Http\Controllers\PrivacyController::class, 'index'])->name('privacy.index');
+    Route::post('/settings/privacy/consent', [\App\Http\Controllers\PrivacyController::class, 'updateConsent'])->name('privacy.consent');
+    Route::get('/settings/privacy/export-data', [\App\Http\Controllers\PrivacyController::class, 'exportData'])->name('privacy.export-data');
+    Route::delete('/settings/privacy/account', [\App\Http\Controllers\PrivacyController::class, 'destroyAccount'])->name('privacy.account.destroy');
 
     // Billing & Subscriptions
     Route::post('/billing/checkout', [BillingController::class, 'checkout'])->name('billing.checkout');

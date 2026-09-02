@@ -114,4 +114,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(\App\Modules\Organizations\Models\Organization::class, 'owner_id');
     }
+
+    public function apiKeys(): HasMany
+    {
+        return $this->hasMany(\App\Modules\API\Models\ApiKey::class);
+    }
 }
