@@ -74,10 +74,12 @@ class ProjectController extends Controller
             'documents',
             'versions',
             'websiteAnalysis',
+            'repositoryAudit',
         ]);
 
         return Inertia::render('Projects/Show', [
             'project' => $project,
+            'githubConnection' => $request->user()->githubConnection,
         ]);
     }
 

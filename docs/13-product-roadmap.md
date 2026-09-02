@@ -147,29 +147,29 @@
 **Goal:** Repository analysis and code-connected recommendations
 
 ### GitHub Integration
-- [ ] Repository authorization (separate from login)
-- [ ] Repository read access
-- [ ] Repository structure analysis
-- [ ] Architecture detection
-- [ ] Dependency analysis
-- [ ] Technical debt identification
-- [ ] Security concern detection
+- [x] Repository authorization (separate from login)
+- [x] Repository read access
+- [x] Repository structure analysis
+- [x] Architecture detection
+- [x] Dependency analysis
+- [x] Technical debt identification
+- [x] Security concern detection
 
 ### Code-Connected Recommendations
-- [ ] Link repository findings to Opportunity Graph
-- [ ] Improvement roadmap generation
-- [ ] Architecture review output
+- [x] Link repository findings to Opportunity Graph
+- [x] Improvement roadmap generation
+- [x] Architecture review output
 
 ### GitHub Export
-- [ ] Create repository
-- [ ] Create branch
-- [ ] Commit generated package
-- [ ] Push with confirmation
+- [x] Create repository / branch isolation
+- [x] Create branch (enforces zero force-push, zero commit to main)
+- [x] Commit generated package (FORGE_BLUEPRINT, docs, roadmaps)
+- [x] Push with confirmation and automated Pull Request link
 
 ### New Classification Support
-- [ ] SOFTWARE_OPTIMIZATION workflow
-- [ ] TECHNICAL_AUDIT workflow
-- [ ] SOFTWARE_REBUILD workflow
+- [x] SOFTWARE_OPTIMIZATION workflow
+- [x] TECHNICAL_AUDIT workflow
+- [x] SOFTWARE_REBUILD workflow
 
 ---
 

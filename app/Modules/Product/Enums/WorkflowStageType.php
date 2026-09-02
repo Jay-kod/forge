@@ -33,6 +33,13 @@ enum WorkflowStageType: string
     case SITUATION_ANALYSIS = 'situation_analysis';
     case ROADMAP = 'roadmap';
 
+    // Phase 3 (GitHub & Codebase Intelligence)
+    case REPO_INSPECTION = 'repo_inspection';
+    case CODE_AUDIT = 'code_audit';
+    case SECURITY_AUDIT = 'security_audit';
+    case REFACTOR_ROADMAP = 'refactor_roadmap';
+    case GITHUB_EXPORT = 'github_export';
+
     public function label(): string
     {
         return match ($this) {
@@ -59,6 +66,13 @@ enum WorkflowStageType: string
             self::EXPANSION_STRATEGY => 'Geographic Expansion Strategy',
             self::SITUATION_ANALYSIS => 'Strategic Situation Analysis',
             self::ROADMAP => 'Executive Execution Roadmap',
+
+            // Phase 3
+            self::REPO_INSPECTION => 'Repository & Stack Inspection',
+            self::CODE_AUDIT => 'Technical Debt & Code Quality Audit',
+            self::SECURITY_AUDIT => 'Security & Vulnerability Review',
+            self::REFACTOR_ROADMAP => 'Modernization & Refactoring Roadmap',
+            self::GITHUB_EXPORT => 'Direct GitHub Blueprint Export',
         };
     }
 }

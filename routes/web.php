@@ -6,6 +6,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\ExportController;
+use App\Http\Controllers\GitHubController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ResearchController;
 use App\Http\Controllers\WorkflowController;
@@ -56,6 +57,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/projects/{project}/export/package', [ExportController::class, 'downloadPackage'])->name('export.package');
     Route::get('/projects/{project}/export/pdf', [ExportController::class, 'downloadPdf'])->name('export.pdf');
     Route::get('/projects/{project}/export/growth-plan', [ExportController::class, 'downloadGrowthPlanPdf'])->name('export.growth-plan');
+
+    // GitHub Repository Integration
+    Route::get('/integrations/github/connect', [GitHubController::class, 'connect'])->name('github.connect');
+    Route::get('/integrations/github/callback', [GitHubController::class, 'callback'])->name('github.callback');
+    Route::post('/integrations/github/disconnect', [GitHubController::class, 'disconnect'])->name('github.disconnect');
+    Route::get('/integrations/github/repositories', [GitHubController::class, 'repositories'])->name('github.repositories');
+    Route::post('/projects/{project}/github/scan', [GitHubController::class, 'scan'])->name('projects.github.scan');
+    Route::post('/projects/{project}/github/export', [GitHubController::class, 'export'])->name('projects.github.export');
 
     // Admin Panel (Admin role only)
     Route::middleware(['admin'])->prefix('admin')->group(function () {

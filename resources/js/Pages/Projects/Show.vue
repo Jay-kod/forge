@@ -9,6 +9,9 @@ import EvidenceRegistry from '@/Components/EvidenceRegistry.vue';
 import DocumentViewer from '@/Components/DocumentViewer.vue';
 import WebsiteAuditCard from '@/Components/WebsiteAuditCard.vue';
 import OpportunityMatrix from '@/Components/OpportunityMatrix.vue';
+import GitHubConnectModal from '@/Components/GitHub/GitHubConnectModal.vue';
+import RepositoryAuditCard from '@/Components/GitHub/RepositoryAuditCard.vue';
+import GitHubExportModal from '@/Components/GitHub/GitHubExportModal.vue';
 import type { Project, WorkflowStage } from '@/types';
 
 const props = defineProps<{
@@ -22,7 +25,9 @@ const props = defineProps<{
         documents?: any[];
         versions?: any[];
         website_analysis?: any;
+        repository_audit?: any;
     };
+    githubConnection?: any;
 }>();
 
 const activeStage = computed(() => {
@@ -31,6 +36,13 @@ const activeStage = computed(() => {
 });
 
 const isRunning = ref(false);
+const showGitHubModal = ref(false);
+const showExportModal = ref(false);
+const currentAudit = ref(props.project.repository_audit);
+
+const handleScanned = (auditData: any) => {
+    currentAudit.value = auditData;
+};
 
 const advanceStage = (stage: WorkflowStage) => {
     isRunning.value = true;
@@ -82,6 +94,14 @@ const copyMasterPrompt = () => {
                 >
                     📋 Master Prompt
                 </button>
+                <button
+                    @click="showGitHubModal = true"
+                    class="px-3 py-2 rounded-xl border border-primary bg-surface-secondary hover:bg-surface-tertiary text-text-secondary hover:text-text-primary text-xs font-mono transition-colors inline-flex items-center gap-1.5"
+                    title="Connect & Scan GitHub Repository"
+                >
+                    <span>🐙</span>
+                    <span>{{ currentAudit ? currentAudit.repo_full_name : (githubConnection ? 'GitHub Connected' : 'Connect GitHub') }}</span>
+                </button>
                 <a
                     :href="route('export.pdf', project.id)"
                     class="px-3 py-2 rounded-xl border border-primary bg-surface-secondary hover:bg-surface-tertiary text-text-secondary hover:text-text-primary text-xs font-mono transition-colors inline-flex items-center gap-1.5"
@@ -123,6 +143,15 @@ const copyMasterPrompt = () => {
 
                 <!-- Live Website Performance & UX Audit (when analyzed) -->
                 <WebsiteAuditCard :analysis="project.website_analysis" />
+
+                <!-- GitHub Repository Code Health & Architecture Audit -->
+                <RepositoryAuditCard
+                    v-if="currentAudit"
+                    :audit="currentAudit"
+                    :project="project"
+                    @open-export="showExportModal = true"
+                    @rescan="showGitHubModal = true"
+                />
 
                 <!-- Active Stage Card -->
                 <div v-if="activeStage" class="bg-surface-secondary border border-primary rounded-2xl p-6 shadow-md">
@@ -272,5 +301,23 @@ const copyMasterPrompt = () => {
                 :project-title="project.title"
             />
         </div>
+
+        <!-- GitHub Connect & Scan Modal -->
+        <GitHubConnectModal
+            :show="showGitHubModal"
+            :project="project"
+            :github-connection="githubConnection"
+            @close="showGitHubModal = false"
+            @scanned="handleScanned"
+        />
+
+        <!-- GitHub Export & Blueprint Branch Modal -->
+        <GitHubExportModal
+            v-if="currentAudit"
+            :show="showExportModal"
+            :project="project"
+            :audit="currentAudit"
+            @close="showExportModal = false"
+        />
     </AppLayout>
 </template>

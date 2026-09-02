@@ -108,4 +108,9 @@ class Project extends Model
     {
         return $this->hasOne(\App\Modules\Research\Models\WebsiteAnalysis::class);
     }
+
+    public function repositoryAudit(): HasOne
+    {
+        return $this->hasOne(\App\Modules\GitHub\Models\RepositoryAudit::class);
+    }
 }

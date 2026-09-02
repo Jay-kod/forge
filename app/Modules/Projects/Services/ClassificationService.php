@@ -17,13 +17,31 @@ class ClassificationService implements ClassificationServiceInterface
     {
         $input = mb_strtolower(trim($userInput));
 
-        // Rule-based classification heuristics
-        if (preg_match('/\b(github|repo|codebase|refactor|legacy code|code quality|audit.*code)\b/i', $input)) {
+        // Phase 3 Codebase & GitHub Intelligence Heuristics
+        if (preg_match('/\b(security review|technical audit|security audit|compliance audit|vulnerability scan|audit.*codebase|code.*audit)\b/i', $input)) {
+            return new ClassificationResult(
+                classification: ProjectType::TECHNICAL_AUDIT,
+                confidence: 0.92,
+                reasoning: 'Input requests a comprehensive technical, security, and architectural audit.',
+                suggestedStages: ['understanding', 'repo_inspection', 'code_audit', 'security_audit', 'github_export']
+            );
+        }
+
+        if (preg_match('/\b(rebuild|rewrite.*app|modernize.*legacy|migrate to modern|full rewrite)\b/i', $input)) {
+            return new ClassificationResult(
+                classification: ProjectType::SOFTWARE_REBUILD,
+                confidence: 0.90,
+                reasoning: 'Input requests modernizing or rewriting a legacy codebase.',
+                suggestedStages: ['understanding', 'repo_inspection', 'code_audit', 'architecture', 'refactor_roadmap', 'github_export']
+            );
+        }
+
+        if (preg_match('/\b(github|repo|codebase|refactor|legacy code|code quality|optimize.*code|performance bottleneck|latency)\b/i', $input)) {
             return new ClassificationResult(
                 classification: ProjectType::SOFTWARE_OPTIMIZATION,
                 confidence: 0.90,
                 reasoning: 'Input mentions GitHub repository or codebase optimization.',
-                suggestedStages: ['understanding', 'discovery', 'research', 'challenge', 'strategy', 'package']
+                suggestedStages: ['understanding', 'repo_inspection', 'code_audit', 'refactor_roadmap', 'github_export']
             );
         }
 

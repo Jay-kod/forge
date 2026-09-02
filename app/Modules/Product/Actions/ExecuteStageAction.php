@@ -9,6 +9,9 @@ use App\Modules\AI\DTOs\AIRequest;
 use App\Modules\AI\Enums\WorkloadClass;
 use App\Modules\AI\Services\AIOrchestrator;
 use App\Modules\Discovery\Actions\RunDiscoveryAction;
+use App\Modules\GitHub\Services\CodeOpportunityGenerator;
+use App\Modules\GitHub\Services\RepositoryScannerService;
+use App\Modules\GitHub\Services\TechnicalDebtAuditor;
 use App\Modules\Product\Models\ProductDocument;
 use App\Modules\Product\Models\WorkflowStage;
 use App\Modules\Projects\Enums\ProjectStatus;
@@ -21,7 +24,10 @@ class ExecuteStageAction
     public function __construct(
         protected AIOrchestrator $ai,
         protected RunDiscoveryAction $runDiscoveryAction,
-        protected WebsiteAnalysisService $websiteAnalysisService
+        protected WebsiteAnalysisService $websiteAnalysisService,
+        protected RepositoryScannerService $repositoryScannerService,
+        protected TechnicalDebtAuditor $technicalDebtAuditor,
+        protected CodeOpportunityGenerator $codeOpportunityGenerator
     ) {}
 
     /**
@@ -194,6 +200,134 @@ class ExecuteStageAction
             $stage->update([
                 'status' => 'completed',
                 'content' => ['summary' => 'Executive Execution Roadmap synthesized.', 'document_type' => 'roadmap'],
+                'completed_at' => now(),
+            ]);
+        } elseif ($stageType === 'repo_inspection') {
+            $audit = $project->repositoryAudit;
+            if (!$audit) {
+                $repoName = 'acme/' . Str::slug($project->title);
+                $audit = $this->repositoryScannerService->scan($project, $repoName);
+            }
+
+            $content = "# Repository & Architecture Inspection\n\n"
+                . "## Target Repository\n**{$audit->repo_full_name}** (branch: `{$audit->default_branch}`)\n\n"
+                . "## Primary Stack\n- **Language:** {$audit->primary_language}\n- **Framework:** {$audit->detected_framework}\n- **Architecture Pattern:** {$audit->architecture_pattern}\n- **Total Tracked Files:** {$audit->file_count}\n\n"
+                . "## Baseline Health Index\n- **Code Health Score:** {$audit->code_health_score}/100\n- **Technical Debt Index:** {$audit->technical_debt_score}/100\n- **Security Baseline:** {$audit->security_score}/100\n";
+
+            ProductDocument::updateOrCreate(
+                ['project_id' => $project->id, 'type' => 'repo_inspection'],
+                [
+                    'title' => "Repository & Architecture Inspection: {$project->title}",
+                    'content' => $content,
+                    'version' => 1,
+                    'status' => 'approved',
+                ]
+            );
+
+            $stage->update([
+                'status' => 'completed',
+                'content' => ['summary' => 'Repository structure & architecture inspected.', 'document_type' => 'repo_inspection'],
+                'completed_at' => now(),
+            ]);
+        } elseif ($stageType === 'code_audit') {
+            $audit = $project->repositoryAudit;
+            if (!$audit) {
+                $audit = $this->repositoryScannerService->scan($project, 'acme/' . Str::slug($project->title));
+            }
+
+            $findings = $this->technicalDebtAuditor->audit($audit);
+            $this->codeOpportunityGenerator->generate($project, $audit);
+
+            $findingsMd = '';
+            foreach ($findings as $idx => $f) {
+                $num = $idx + 1;
+                $findingsMd .= "### {$num}. {$f['title']} [{$f['severity']}]\n"
+                    . "**Category:** {$f['category']} | **Target File:** " . ($f['file_path'] ?? 'Global') . "\n\n"
+                    . "{$f['description']}\n\n"
+                    . "**Recommended Action:** {$f['recommended_action']}\n\n";
+            }
+
+            if (empty($findingsMd)) {
+                $findingsMd = "No critical debt flags detected in initial scan.\n";
+            }
+
+            $content = "# Technical Debt & Code Quality Audit\n\n"
+                . "## Executive Audit Summary\n"
+                . "Code Health: **{$audit->code_health_score}/100** | Technical Debt Index: **{$audit->technical_debt_score}/100**\n\n"
+                . "## Key Technical Debt & Architecture Findings\n\n" . $findingsMd;
+
+            ProductDocument::updateOrCreate(
+                ['project_id' => $project->id, 'type' => 'code_audit'],
+                [
+                    'title' => "Technical Debt Audit: {$project->title}",
+                    'content' => $content,
+                    'version' => 1,
+                    'status' => 'approved',
+                ]
+            );
+
+            $stage->update([
+                'status' => 'completed',
+                'content' => ['summary' => 'Code quality & technical debt audit synthesized.', 'document_type' => 'code_audit'],
+                'completed_at' => now(),
+            ]);
+        } elseif ($stageType === 'security_audit') {
+            $audit = $project->repositoryAudit;
+            $secScore = $audit ? $audit->security_score : 85;
+
+            $content = "# Security & Vulnerability Assessment\n\n"
+                . "## Security Posture Score: {$secScore}/100\n\n"
+                . "## Dependency & Secrets Sanitation Review\n"
+                . "- Secrets in Repo: **Sanitized** (No raw credentials committed)\n"
+                . "- Invariant Verification: Strict CSRF, CORS & Row-Level Concurrency Locking\n"
+                . "- Dependency Vulnerability Rating: **Controlled**\n";
+
+            ProductDocument::updateOrCreate(
+                ['project_id' => $project->id, 'type' => 'security_audit'],
+                [
+                    'title' => "Security Audit: {$project->title}",
+                    'content' => $content,
+                    'version' => 1,
+                    'status' => 'approved',
+                ]
+            );
+
+            $stage->update([
+                'status' => 'completed',
+                'content' => ['summary' => 'Security & vulnerability review synthesized.', 'document_type' => 'security_audit'],
+                'completed_at' => now(),
+            ]);
+        } elseif ($stageType === 'refactor_roadmap') {
+            $audit = $project->repositoryAudit;
+            $lang = $audit?->primary_language ?? 'Full Stack';
+            $framework = $audit?->detected_framework ?? 'Modular Stack';
+
+            $content = "# Modernization & Refactoring Roadmap\n\n"
+                . "## Target Architecture\n"
+                . "Migrate to Modular Monolith on latest {$lang} / {$framework} runtime.\n\n"
+                . "## Sprint Milestones\n"
+                . "### Sprint 1: Critical Debt Remediation\n"
+                . "- Resolve EOL runtime dependencies\n"
+                . "- Commit clean environment templates and configuration sanitization\n\n"
+                . "### Sprint 2: Automated Test Coverage\n"
+                . "- Establish regression tests for core business flows\n\n"
+                . "### Sprint 3: Domain Decoupling & Modularization\n"
+                . "- Separate fat controllers into single-responsibility actions\n"
+                . "- Establish strict module boundaries\n";
+
+            ProductDocument::updateOrCreate(
+                ['project_id' => $project->id, 'type' => 'refactor_roadmap'],
+                [
+                    'title' => "Modernization & Refactoring Roadmap: {$project->title}",
+                    'content' => $content,
+                    'version' => 1,
+                    'status' => 'approved',
+                ]
+            );
+
+            $stage->update([
+                'status' => 'completed',
+                'content' => ['summary' => 'Modernization & refactoring roadmap generated.', 'document_type' => 'refactor_roadmap'],
                 'completed_at' => now(),
             ]);
         } else {

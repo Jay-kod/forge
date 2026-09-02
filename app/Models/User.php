@@ -97,4 +97,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(\App\Modules\Identity\Models\Referral::class, 'referrer_id');
     }
+
+    public function githubConnection(): HasOne
+    {
+        return $this->hasOne(\App\Modules\GitHub\Models\GitHubConnection::class);
+    }
 }
