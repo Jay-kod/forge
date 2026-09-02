@@ -34,6 +34,17 @@ class WorkflowController extends Controller
             'approved_by' => $request->user()->id,
         ]);
 
+        if ($project->organization_id) {
+            app(\App\Modules\Organizations\Services\AuditLogService::class)->record(
+                'stage.approved',
+                $request->user(),
+                $project->organization,
+                'workflow_stage',
+                $stage->id,
+                ['stage' => $stage->stage_type->value]
+            );
+        }
+
         return redirect()->route('projects.show', $project)->with('success', "Stage {$stage->stage_type->label()} approved.");
     }
 

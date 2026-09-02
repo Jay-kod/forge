@@ -42,6 +42,27 @@ const logout = () => {
                             Workspaces
                         </Link>
                         <Link
+                            :href="route('organizations.index')"
+                            class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                            :class="route().current('organizations.*') ? 'bg-surface-elevated text-indigo-400 font-semibold shadow-xs border border-primary' : 'text-text-secondary hover:text-text-primary hover:bg-surface-tertiary'"
+                        >
+                            🏢 Teams
+                        </Link>
+                        <Link
+                            :href="route('api-keys.index')"
+                            class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                            :class="route().current('api-keys.*') ? 'bg-surface-elevated text-indigo-400 font-semibold shadow-xs border border-primary' : 'text-text-secondary hover:text-text-primary hover:bg-surface-tertiary'"
+                        >
+                            API Keys
+                        </Link>
+                        <Link
+                            :href="route('byok.index')"
+                            class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                            :class="route().current('byok.*') ? 'bg-surface-elevated text-indigo-400 font-semibold shadow-xs border border-primary' : 'text-text-secondary hover:text-text-primary hover:bg-surface-tertiary'"
+                        >
+                            BYOK
+                        </Link>
+                        <Link
                             :href="route('pricing')"
                             class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
                             :class="route().current('pricing') ? 'bg-surface-elevated text-indigo-400 font-semibold shadow-xs border border-primary' : 'text-text-secondary hover:text-text-primary hover:bg-surface-tertiary'"
@@ -141,6 +162,27 @@ const logout = () => {
                         class="block px-3 py-2 rounded-lg text-xs font-semibold text-text-primary hover:bg-surface-tertiary"
                     >
                         Workspaces
+                    </Link>
+                    <Link
+                        :href="route('organizations.index')"
+                        @click="isMobileMenuOpen = false"
+                        class="block px-3 py-2 rounded-lg text-xs font-semibold text-text-primary hover:bg-surface-tertiary"
+                    >
+                        🏢 Teams & Organizations
+                    </Link>
+                    <Link
+                        :href="route('api-keys.index')"
+                        @click="isMobileMenuOpen = false"
+                        class="block px-3 py-2 rounded-lg text-xs font-semibold text-text-primary hover:bg-surface-tertiary"
+                    >
+                        🔑 API Keys
+                    </Link>
+                    <Link
+                        :href="route('byok.index')"
+                        @click="isMobileMenuOpen = false"
+                        class="block px-3 py-2 rounded-lg text-xs font-semibold text-text-primary hover:bg-surface-tertiary"
+                    >
+                        🔐 BYOK Credentials
                     </Link>
                     <Link
                         :href="route('pricing')"

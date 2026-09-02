@@ -16,7 +16,15 @@ class ProjectPolicy
 
     public function view(User $user, Project $project): bool
     {
-        return $user->id === $project->user_id || $user->isAdmin();
+        if ($user->id === $project->user_id || $user->isAdmin()) {
+            return true;
+        }
+
+        if ($project->organization_id && $project->organization) {
+            return $project->organization->hasMember($user);
+        }
+
+        return false;
     }
 
     public function create(User $user): bool
@@ -26,11 +34,27 @@ class ProjectPolicy
 
     public function update(User $user, Project $project): bool
     {
-        return $user->id === $project->user_id || $user->isAdmin();
+        if ($user->id === $project->user_id || $user->isAdmin()) {
+            return true;
+        }
+
+        if ($project->organization_id && $project->organization) {
+            return $project->organization->hasRole($user, ['owner', 'admin', 'member']);
+        }
+
+        return false;
     }
 
     public function delete(User $user, Project $project): bool
     {
-        return $user->id === $project->user_id || $user->isAdmin();
+        if ($user->id === $project->user_id || $user->isAdmin()) {
+            return true;
+        }
+
+        if ($project->organization_id && $project->organization) {
+            return $project->organization->hasRole($user, ['owner', 'admin']);
+        }
+
+        return false;
     }
 }

@@ -22,6 +22,47 @@ class ReserveCreditsAction
     ): CreditTransaction {
         return DB::transaction(function () use ($user, $amount, $referenceType, $referenceId, $projectId) {
             /** @var CreditAccount|null $account */
+            $account = null;
+
+            if ($projectId) {
+                $project = \App\Modules\Projects\Models\Project::find($projectId);
+                if ($project && $project->organization_id) {
+                    $orgAccount = \App\Modules\Organizations\Models\OrganizationCreditAccount::where('organization_id', $project->organization_id)->lockForUpdate()->first();
+                    if (!$orgAccount || $orgAccount->balance < $amount) {
+                        throw new RuntimeException("Insufficient organization pooled credits. Required: {$amount}, Available: " . ($orgAccount->balance ?? 0));
+                    }
+
+                    $orgAccount->balance -= $amount;
+                    $orgAccount->save();
+
+                    // Record in organization credit transactions
+                    \App\Modules\Organizations\Models\OrganizationCreditTransaction::create([
+                        'organization_credit_account_id' => $orgAccount->id,
+                        'user_id' => $user->id,
+                        'type' => 'reservation',
+                        'amount' => -$amount,
+                        'balance_after' => $orgAccount->balance,
+                        'reference_type' => $referenceType,
+                        'reference_id' => $referenceId,
+                        'description' => "Reserved {$amount} pooled credits for {$referenceType}",
+                        'project_id' => $projectId,
+                    ]);
+
+                    // Provide CreditTransaction reference for pipeline compatibility
+                    $userAccount = CreditAccount::firstOrCreate(['user_id' => $user->id], ['balance' => 0]);
+                    return CreditTransaction::create([
+                        'credit_account_id' => $userAccount->id,
+                        'type' => TransactionType::RESERVATION,
+                        'amount' => -$amount,
+                        'balance_after' => $orgAccount->balance,
+                        'reference_type' => $referenceType,
+                        'reference_id' => $referenceId,
+                        'description' => "Reserved {$amount} pooled credits for {$referenceType}",
+                        'project_id' => $projectId,
+                    ]);
+                }
+            }
+
             $account = CreditAccount::where('user_id', $user->id)->lockForUpdate()->first();
 
             if (!$account || $account->balance < $amount) {

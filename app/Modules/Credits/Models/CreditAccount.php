@@ -13,6 +13,7 @@ class CreditAccount extends Model
 {
     protected $fillable = [
         'user_id',
+        'organization_id',
         'balance',
         'lifetime_granted',
         'lifetime_consumed',
@@ -30,6 +31,11 @@ class CreditAccount extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(\App\Modules\Organizations\Models\Organization::class);
     }
 
     public function transactions(): HasMany

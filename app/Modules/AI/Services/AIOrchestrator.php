@@ -32,10 +32,24 @@ class AIOrchestrator
         $provider = $this->selectProvider($request);
         $estimate = $provider->estimate($request);
 
+        // Check if user or project organization has BYOK enabled for this provider
+        $creditsToCharge = $estimate->credits;
+        $byokService = app(ByokService::class);
+        $org = null;
+        if ($request->projectId) {
+            $project = \App\Modules\Projects\Models\Project::find($request->projectId);
+            $org = $project?->organization;
+        }
+
+        if ($byokService->hasCredential($request->user, $provider->identifier(), $org)) {
+            // Enterprise BYOK discount: 1 nominal coordination credit instead of standard rate
+            $creditsToCharge = min(1, $estimate->credits);
+        }
+
         // 1. Atomically reserve credits
         $reservation = $this->credits->reserve(
             user: $request->user,
-            amount: $estimate->credits,
+            amount: $creditsToCharge,
             referenceType: $request->operationType,
             projectId: $request->projectId
         );

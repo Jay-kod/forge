@@ -102,4 +102,16 @@ class User extends Authenticatable
     {
         return $this->hasOne(\App\Modules\GitHub\Models\GitHubConnection::class);
     }
+
+    public function organizations(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(\App\Modules\Organizations\Models\Organization::class, 'organization_user')
+            ->withPivot('role')
+            ->withTimestamps();
+    }
+
+    public function ownedOrganizations(): HasMany
+    {
+        return $this->hasMany(\App\Modules\Organizations\Models\Organization::class, 'owner_id');
+    }
 }

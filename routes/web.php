@@ -61,6 +61,27 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/alerts/{alert}/read', [\App\Http\Controllers\AlertController::class, 'markRead'])->name('alerts.read');
     Route::post('/alerts/read-all', [\App\Http\Controllers\AlertController::class, 'markAllRead'])->name('alerts.read_all');
 
+    // Organizations, Team Workspaces & Membership
+    Route::get('/organizations', [\App\Http\Controllers\OrganizationController::class, 'index'])->name('organizations.index');
+    Route::post('/organizations', [\App\Http\Controllers\OrganizationController::class, 'store'])->name('organizations.store');
+    Route::get('/organizations/{organization}', [\App\Http\Controllers\OrganizationController::class, 'show'])->name('organizations.show');
+    Route::post('/organizations/{organization}/invite', [\App\Http\Controllers\OrganizationController::class, 'invite'])->name('organizations.invite');
+    Route::post('/organizations/invitations/{token}/accept', [\App\Http\Controllers\OrganizationController::class, 'acceptInvite'])->name('organizations.invitations.accept');
+    Route::delete('/organizations/{organization}/members/{user}', [\App\Http\Controllers\OrganizationController::class, 'removeMember'])->name('organizations.members.remove');
+    Route::patch('/organizations/{organization}/members/{user}/role', [\App\Http\Controllers\OrganizationController::class, 'updateRole'])->name('organizations.members.update-role');
+    Route::get('/organizations/{organization}/audit-logs', [\App\Http\Controllers\AuditLogController::class, 'index'])->name('organizations.audit-logs.index');
+    Route::get('/organizations/{organization}/audit-logs/export', [\App\Http\Controllers\AuditLogController::class, 'export'])->name('organizations.audit-logs.export');
+
+    // API Key Management
+    Route::get('/settings/api-keys', [\App\Http\Controllers\ApiKeyManagementController::class, 'index'])->name('api-keys.index');
+    Route::post('/settings/api-keys', [\App\Http\Controllers\ApiKeyManagementController::class, 'store'])->name('api-keys.store');
+    Route::delete('/settings/api-keys/{apiKey}', [\App\Http\Controllers\ApiKeyManagementController::class, 'destroy'])->name('api-keys.destroy');
+
+    // Bring Your Own Key (BYOK) Credentials
+    Route::get('/settings/byok', [\App\Http\Controllers\ByokController::class, 'index'])->name('byok.index');
+    Route::post('/settings/byok', [\App\Http\Controllers\ByokController::class, 'store'])->name('byok.store');
+    Route::delete('/settings/byok/{provider}', [\App\Http\Controllers\ByokController::class, 'destroy'])->name('byok.destroy');
+
     // Billing & Subscriptions
     Route::post('/billing/checkout', [BillingController::class, 'checkout'])->name('billing.checkout');
     Route::get('/billing/portal', [BillingController::class, 'portal'])->name('billing.portal');
