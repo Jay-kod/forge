@@ -32,7 +32,7 @@ class ClassificationService implements ClassificationServiceInterface
                 classification: ProjectType::MARKET_EXPANSION,
                 confidence: 0.88,
                 reasoning: 'Input mentions geographic or market expansion.',
-                suggestedStages: ['understanding', 'discovery', 'research', 'strategy']
+                suggestedStages: ['understanding', 'geographic_research', 'market_comparison', 'expansion_strategy']
             );
         }
 
@@ -41,7 +41,16 @@ class ClassificationService implements ClassificationServiceInterface
                 classification: ProjectType::WEBSITE_IMPROVEMENT,
                 confidence: 0.88,
                 reasoning: 'Input focuses on website performance and conversion improvement.',
-                suggestedStages: ['understanding', 'discovery', 'research', 'challenge', 'strategy']
+                suggestedStages: ['understanding', 'website_audit', 'ux_analysis', 'competitor_comparison', 'improvement_plan']
+            );
+        }
+
+        if (preg_match('/\b(strategic planning|business strategy|strategic roadmap|what should we do next|quarterly strategy|pivot.*business)\b/i', $input)) {
+            return new ClassificationResult(
+                classification: ProjectType::STRATEGIC_PLANNING,
+                confidence: 0.88,
+                reasoning: 'Input focuses on executive strategy and strategic planning.',
+                suggestedStages: ['understanding', 'situation_analysis', 'research', 'strategy', 'roadmap']
             );
         }
 
@@ -59,7 +68,7 @@ class ClassificationService implements ClassificationServiceInterface
                 classification: ProjectType::BUSINESS_GROWTH,
                 confidence: 0.86,
                 reasoning: 'Input focuses on growing an existing business and customer acquisition.',
-                suggestedStages: ['understanding', 'discovery', 'research', 'strategy']
+                suggestedStages: ['understanding', 'business_analysis', 'research', 'growth_plan']
             );
         }
 

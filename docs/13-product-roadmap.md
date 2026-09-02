@@ -104,40 +104,40 @@
 **Goal:** Support existing businesses and broader classification types
 
 ### New Classification Support
-- [ ] BUSINESS_GROWTH workflow
-- [ ] WEBSITE_IMPROVEMENT workflow
-- [ ] MARKET_EXPANSION workflow
-- [ ] STRATEGIC_PLANNING workflow
+- [x] BUSINESS_GROWTH workflow
+- [x] WEBSITE_IMPROVEMENT workflow
+- [x] MARKET_EXPANSION workflow
+- [x] STRATEGIC_PLANNING workflow
 
 ### Website Analysis
-- [ ] URL input and basic website analysis
-- [ ] UX assessment (AI-driven)
-- [ ] Competitor comparison
+- [x] URL input and basic website analysis
+- [x] UX assessment (AI-driven)
+- [x] Competitor comparison
 
 ### Geographic Intelligence
-- [ ] Location model and market model
-- [ ] Geographic context in research
-- [ ] Location-aware competitor analysis
+- [x] Location model and market model
+- [x] Geographic context in research
+- [x] Location-aware competitor analysis
 
 ### Growth & Opportunity Engine
-- [ ] Proactive opportunity identification
-- [ ] Opportunity ranking
-- [ ] Growth plan generation
+- [x] Proactive opportunity identification
+- [x] Opportunity ranking
+- [x] Growth plan generation
 
 ### Improved Research
-- [ ] Research refresh capability
-- [ ] Research freshness indicators
-- [ ] Multiple research sessions per project
+- [x] Research refresh capability
+- [x] Research freshness indicators
+- [x] Multiple research sessions per project
 
 ### PDF Improvement
-- [ ] Polished PDF with executive summary
-- [ ] Branded PDF (Business plan)
-- [ ] Source references section
+- [x] Polished PDF with executive summary
+- [x] Branded PDF (Business plan)
+- [x] Source references section
 
 ### Referral System
-- [ ] Referral code generation
-- [ ] Referral tracking
-- [ ] Credit rewards on meaningful activation
+- [x] Referral code generation
+- [x] Referral tracking
+- [x] Credit rewards on meaningful activation
 
 ---
 

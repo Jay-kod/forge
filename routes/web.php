@@ -7,6 +7,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ResearchController;
 use App\Http\Controllers\WorkflowController;
 use Illuminate\Support\Facades\Route;
 
@@ -40,6 +41,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
     Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
     Route::post('/projects/{project}/archive', [ProjectController::class, 'archive'])->name('projects.archive');
+    Route::post('/projects/{project}/research/refresh', [ResearchController::class, 'refresh'])->name('research.refresh');
 
     // Workflow Stages & Decisions
     Route::post('/projects/{project}/stages/{stage}/advance', [WorkflowController::class, 'advance'])->name('workflow.advance');
@@ -53,6 +55,7 @@ Route::middleware(['auth'])->group(function () {
     // Exports
     Route::get('/projects/{project}/export/package', [ExportController::class, 'downloadPackage'])->name('export.package');
     Route::get('/projects/{project}/export/pdf', [ExportController::class, 'downloadPdf'])->name('export.pdf');
+    Route::get('/projects/{project}/export/growth-plan', [ExportController::class, 'downloadGrowthPlanPdf'])->name('export.growth-plan');
 
     // Admin Panel (Admin role only)
     Route::middleware(['admin'])->prefix('admin')->group(function () {

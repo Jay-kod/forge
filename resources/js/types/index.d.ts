@@ -5,6 +5,7 @@ export interface User {
     avatar_url: string | null;
     role: 'user' | 'admin';
     technical_level: 'non_developer' | 'vibe_coder' | 'developer' | 'senior_developer' | null;
+    referral_code?: string | null;
     created_at?: string;
 }
 

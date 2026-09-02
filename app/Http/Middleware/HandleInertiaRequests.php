@@ -43,6 +43,7 @@ class HandleInertiaRequests extends Middleware
                     'avatar_url' => $user->avatar_url,
                     'role' => $user->role ?? 'user',
                     'technical_level' => $user->technical_level,
+                    'referral_code' => $user->referral_code,
                 ] : null,
             ],
             'credits' => [

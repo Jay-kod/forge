@@ -20,6 +20,11 @@ class ResearchSession extends Model
         'credits_consumed',
     ];
 
+    protected $appends = [
+        'freshness',
+        'days_old',
+    ];
+
     protected function casts(): array
     {
         return [
@@ -37,5 +42,26 @@ class ResearchSession extends Model
     public function sources(): HasMany
     {
         return $this->hasMany(ResearchSource::class);
+    }
+
+    public function getDaysOldAttribute(): int
+    {
+        $date = $this->completed_at ?? $this->created_at;
+        return $date ? (int) $date->diffInDays(now()) : 0;
+    }
+
+    /**
+     * Determine research freshness: fresh (<=30d), aging (31-90d), stale (>90d).
+     */
+    public function getFreshnessAttribute(): string
+    {
+        $days = $this->days_old;
+        if ($days <= 30) {
+            return 'fresh';
+        }
+        if ($days <= 90) {
+            return 'aging';
+        }
+        return 'stale';
     }
 }

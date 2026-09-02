@@ -12,6 +12,7 @@ use App\Modules\Discovery\Services\DiscoveryService;
 use App\Modules\Evidence\Services\EvidenceService;
 use App\Modules\Projects\Models\Project;
 use App\Modules\Research\Services\ResearchEngine;
+use App\Modules\Geography\Services\GeographicIntelligenceService;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -24,6 +25,7 @@ class RunDiscoveryAction
         protected EvidenceService $evidenceService,
         protected CompetitorAnalysisService $competitorAnalysisService,
         protected DiscoveryService $discoveryService,
+        protected GeographicIntelligenceService $geographicService,
     ) {}
 
     public function execute(User $user, Project $project): Discovery
@@ -38,7 +40,10 @@ class RunDiscoveryAction
         );
 
         try {
-            // 2. Conduct real-world research
+            // 2. Initialize geographic context if detected
+            $this->geographicService->detectAndInitializeMarket($project, ($project->description ?? '') . ' ' . ($project->title ?? ''));
+
+            // 3. Conduct real-world research
             $researchResult = $this->researchEngine->conductResearch($project, 'market');
 
             // 3. Register evidence from collected sources

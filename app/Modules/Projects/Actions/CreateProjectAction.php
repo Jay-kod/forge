@@ -7,11 +7,13 @@ namespace App\Modules\Projects\Actions;
 use App\Models\User;
 use App\Modules\Billing\Contracts\EntitlementServiceInterface;
 use App\Modules\Context\Models\ProjectContext;
+use App\Modules\Identity\Services\ReferralService;
 use App\Modules\Product\Models\Workflow;
 use App\Modules\Projects\Contracts\ClassificationServiceInterface;
 use App\Modules\Projects\Enums\ProjectStatus;
 use App\Modules\Projects\Enums\WorkflowMode;
 use App\Modules\Projects\Models\Project;
+use App\Modules\Research\Services\WebsiteAnalysisService;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -19,14 +21,17 @@ class CreateProjectAction
 {
     public function __construct(
         protected EntitlementServiceInterface $entitlements,
-        protected ClassificationServiceInterface $classificationService
+        protected ClassificationServiceInterface $classificationService,
+        protected ReferralService $referralService,
+        protected WebsiteAnalysisService $websiteAnalysisService
     ) {}
 
     public function execute(
         User $user,
         string $userInput,
         ?string $title = null,
-        WorkflowMode $mode = WorkflowMode::PAGE_BY_PAGE
+        WorkflowMode $mode = WorkflowMode::PAGE_BY_PAGE,
+        ?string $websiteUrl = null
     ): Project {
         // 1. Entitlement check
         $limit = $this->entitlements->getLimit($user, 'project.create');
@@ -44,7 +49,7 @@ class CreateProjectAction
             throw new RuntimeException('Upgraded plan required for automatic workflow execution.');
         }
 
-        $project = DB::transaction(function () use ($user, $userInput, $title, $mode) {
+        $project = DB::transaction(function () use ($user, $userInput, $title, $mode, $websiteUrl) {
             // 2. Classify situation
             $classification = $this->classificationService->classify($userInput);
 
@@ -62,6 +67,8 @@ class CreateProjectAction
                 'current_stage' => 'understanding',
             ]);
 
+            $resolvedUrl = $websiteUrl ?: $this->extractUrl($userInput);
+
             // 4. Create Project Context
             ProjectContext::create([
                 'project_id' => $project->id,
@@ -75,9 +82,18 @@ class CreateProjectAction
                 'business_context' => [],
                 'product_context' => [],
                 'geographic_context' => [],
-                'existing_system' => [],
+                'existing_system' => $resolvedUrl ? ['website_url' => $resolvedUrl] : [],
                 'goals' => ['primary' => $userInput],
             ]);
+
+            // If a website URL was provided or detected, run the initial audit
+            if ($resolvedUrl) {
+                try {
+                    $this->websiteAnalysisService->analyze($project, $resolvedUrl);
+                } catch (\Throwable) {
+                    // Fail-safe: website analysis should never prevent project creation
+                }
+            }
 
             // 5. Initialize Workflow & Stages
             $workflow = Workflow::create([
@@ -117,6 +133,9 @@ class CreateProjectAction
             \App\Modules\Product\Jobs\RunAutomaticWorkflowJob::dispatch($project);
         }
 
+        // Activate referral bonus if this is user's first project
+        $this->referralService->activateReferralOnFirstProject($user);
+
         return $project;
     }
 
@@ -128,5 +147,14 @@ class CreateProjectAction
         }
 
         return ucfirst(implode(' ', array_slice($words, 0, 5))) . '...';
+    }
+
+    protected function extractUrl(string $input): ?string
+    {
+        if (preg_match('/\bhttps?:\/\/[^\s<>"{}|\^~`]+(?:\.[^\s<>"{}|\^~`]+)+\b/i', $input, $matches)) {
+            return $matches[0];
+        }
+
+        return null;
     }
 }

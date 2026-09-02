@@ -7,6 +7,8 @@ import DiscoveryVerdictCard from '@/Components/DiscoveryVerdictCard.vue';
 import CompetitorMatrix from '@/Components/CompetitorMatrix.vue';
 import EvidenceRegistry from '@/Components/EvidenceRegistry.vue';
 import DocumentViewer from '@/Components/DocumentViewer.vue';
+import WebsiteAuditCard from '@/Components/WebsiteAuditCard.vue';
+import OpportunityMatrix from '@/Components/OpportunityMatrix.vue';
 import type { Project, WorkflowStage } from '@/types';
 
 const props = defineProps<{
@@ -19,6 +21,7 @@ const props = defineProps<{
         opportunities?: any[];
         documents?: any[];
         versions?: any[];
+        website_analysis?: any;
     };
 }>();
 
@@ -87,6 +90,14 @@ const copyMasterPrompt = () => {
                     <span>📄 Blueprint PDF</span>
                 </a>
                 <a
+                    v-if="['BUSINESS_GROWTH', 'WEBSITE_IMPROVEMENT', 'MARKET_EXPANSION', 'STRATEGIC_PLANNING'].includes(project.classification)"
+                    :href="route('export.growth-plan', project.id)"
+                    class="px-3 py-2 rounded-xl border border-primary bg-surface-secondary hover:bg-surface-tertiary text-text-secondary hover:text-text-primary text-xs font-mono transition-colors inline-flex items-center gap-1.5"
+                    title="Download Executive Growth Plan & Strategy PDF"
+                >
+                    <span>🚀 Growth Plan PDF</span>
+                </a>
+                <a
                     :href="route('export.package', project.id)"
                     class="px-3.5 py-2 rounded-xl brand-button text-xs font-bold shadow-md inline-flex items-center gap-1.5"
                 >
@@ -109,6 +120,9 @@ const copyMasterPrompt = () => {
             <div class="lg:col-span-2 space-y-6">
                 <!-- Discovery Verdict Card (when evaluated) -->
                 <DiscoveryVerdictCard :discovery="project.discovery" />
+
+                <!-- Live Website Performance & UX Audit (when analyzed) -->
+                <WebsiteAuditCard :analysis="project.website_analysis" />
 
                 <!-- Active Stage Card -->
                 <div v-if="activeStage" class="bg-surface-secondary border border-primary rounded-2xl p-6 shadow-md">
@@ -186,8 +200,11 @@ const copyMasterPrompt = () => {
                 <!-- Competitor Intelligence Matrix -->
                 <CompetitorMatrix :competitors="project.competitors" />
 
+                <!-- Action Priority Matrix (Opportunities) -->
+                <OpportunityMatrix :opportunities="project.opportunities" />
+
                 <!-- Evidence & Research Registry -->
-                <EvidenceRegistry :evidence="project.evidence" />
+                <EvidenceRegistry :evidence="project.evidence" :project-id="project.id" />
             </div>
 
             <!-- Right 1 Col: Context & Package Inspector -->

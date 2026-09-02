@@ -41,6 +41,7 @@ class ProjectController extends Controller
         $validated = $request->validate([
             'goal' => ['required', 'string', 'min:5', 'max:5000'],
             'title' => ['nullable', 'string', 'max:255'],
+            'website_url' => ['nullable', 'string', 'max:255'],
             'mode' => ['nullable', 'string', 'in:automatic,page_by_page'],
         ]);
 
@@ -52,7 +53,8 @@ class ProjectController extends Controller
             user: $request->user(),
             userInput: $validated['goal'],
             title: $validated['title'] ?? null,
-            mode: $mode
+            mode: $mode,
+            websiteUrl: $validated['website_url'] ?? null
         );
 
         return redirect()->route('projects.show', $project);
@@ -71,6 +73,7 @@ class ProjectController extends Controller
             'opportunities.recommendations',
             'documents',
             'versions',
+            'websiteAnalysis',
         ]);
 
         return Inertia::render('Projects/Show', [

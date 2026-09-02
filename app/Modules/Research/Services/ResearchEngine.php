@@ -83,12 +83,14 @@ class ResearchEngine
     {
         $desc = $project->description ?? $project->title;
         $cleanDesc = trim(preg_replace('/[^\w\s]/', '', $desc));
+        $geo = $project->markets()->first()?->target_geography;
+        $geoSuffix = $geo ? " {$geo}" : '';
 
         return match ($type) {
-            'competitor' => "{$cleanDesc} direct competitors pricing alternatives market share",
-            'market' => "{$cleanDesc} market size customer demand industry trends",
+            'competitor' => "{$cleanDesc} direct competitors pricing alternatives market share{$geoSuffix}",
+            'market' => "{$cleanDesc} market size customer demand industry trends{$geoSuffix}",
             'technology' => "{$cleanDesc} architecture stack dependencies api ecosystem",
-            default => "{$cleanDesc} market research",
+            default => "{$cleanDesc} market research{$geoSuffix}",
         };
     }
 }

@@ -30,7 +30,18 @@ class User extends Authenticatable
         'avatar_url',
         'role',
         'technical_level',
+        'referral_code',
+        'referred_by_id',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (User $user) {
+            if (empty($user->referral_code)) {
+                $user->referral_code = strtoupper(\Illuminate\Support\Str::random(8));
+            }
+        });
+    }
 
     protected $hidden = [
         'password',
@@ -75,5 +86,15 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === UserRole::ADMIN;
+    }
+
+    public function referrer(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'referred_by_id');
+    }
+
+    public function referrals(): HasMany
+    {
+        return $this->hasMany(\App\Modules\Identity\Models\Referral::class, 'referrer_id');
     }
 }

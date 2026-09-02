@@ -5,6 +5,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 
 const form = useForm({
     goal: '',
+    website_url: '',
     mode: 'page_by_page',
 });
 
@@ -61,6 +62,26 @@ const submit = () => {
                     ></textarea>
                     <span v-if="form.errors.goal" class="text-xs text-red-400 mt-1 block">
                         {{ form.errors.goal }}
+                    </span>
+                </div>
+
+                <!-- Optional Website URL -->
+                <div class="mb-6">
+                    <label for="website_url" class="block text-xs font-mono font-semibold uppercase text-text-tertiary mb-2">
+                        Existing Website or Landing Page URL (Optional)
+                    </label>
+                    <input
+                        id="website_url"
+                        v-model="form.website_url"
+                        type="url"
+                        class="w-full rounded-xl bg-surface-primary border border-primary focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-text-primary text-sm px-4 py-3 leading-relaxed transition-all placeholder:text-text-tertiary"
+                        placeholder="https://yourcompany.com"
+                    />
+                    <span v-if="form.errors.website_url" class="text-xs text-red-400 mt-1 block">
+                        {{ form.errors.website_url }}
+                    </span>
+                    <span class="text-[11px] text-text-tertiary font-mono mt-1.5 block">
+                        If provided, FORGE will immediately audit your site's SEO, UX, speed, and conversion readiness.
                     </span>
                 </div>
 

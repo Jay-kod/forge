@@ -103,4 +103,9 @@ class Project extends Model
     {
         return $this->hasMany(Market::class);
     }
+
+    public function websiteAnalysis(): HasOne
+    {
+        return $this->hasOne(\App\Modules\Research\Models\WebsiteAnalysis::class);
+    }
 }

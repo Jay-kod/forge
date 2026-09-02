@@ -2,10 +2,12 @@
 import { ref } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 import ThemeToggle from '@/Components/ThemeToggle.vue';
+import ReferralModal from '@/Components/ReferralModal.vue';
 import type { SharedProps } from '@/types';
 
 const page = usePage<SharedProps>();
 const isMobileMenuOpen = ref(false);
+const isReferralOpen = ref(false);
 
 const logout = () => {
     router.post('/logout');
@@ -64,6 +66,17 @@ const logout = () => {
                         <span class="text-text-tertiary">Credits:</span>
                         <span class="font-bold text-text-primary">⚡ {{ page.props.credits.balance }}</span>
                     </div>
+
+                    <!-- Referral Invite Button -->
+                    <button
+                        v-if="page.props.auth.user"
+                        type="button"
+                        @click="isReferralOpen = true"
+                        class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 text-xs font-mono transition-colors"
+                        title="Invite founders & earn 50 bonus credits"
+                    >
+                        <span>🎁 Invite & Earn</span>
+                    </button>
 
                     <!-- Theme Toggle Component -->
                     <ThemeToggle />
@@ -188,5 +201,10 @@ const logout = () => {
                 </div>
             </div>
         </footer>
+        <ReferralModal
+            :is-open="isReferralOpen"
+            :referral-code="page.props.auth.user?.referral_code"
+            @close="isReferralOpen = false"
+        />
     </div>
 </template>

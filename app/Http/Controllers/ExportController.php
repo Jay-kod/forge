@@ -76,4 +76,23 @@ class ExportController extends Controller
             'Content-Type' => 'application/pdf',
         ]);
     }
+
+    public function downloadGrowthPlanPdf(
+        Request $request,
+        Project $project,
+        \App\Modules\Export\Actions\GenerateGrowthPlanPdfAction $generateAction
+    ): StreamedResponse {
+        $this->authorize('view', $project);
+
+        $cleanPdf = $this->entitlements->can($request->user(), 'export.pdf.clean');
+        $pdf = $generateAction->execute($project, $cleanPdf);
+
+        $filename = 'forge-' . strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $project->title)) . '-growth-plan.pdf';
+
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf->output();
+        }, $filename, [
+            'Content-Type' => 'application/pdf',
+        ]);
+    }
 }

@@ -31,6 +31,7 @@ class ClassificationServiceTest extends TestCase
         $result = $this->service->classify('I run a local laundry business and want more customers');
 
         $this->assertEquals(ProjectType::BUSINESS_GROWTH, $result->classification);
+        $this->assertEquals(['understanding', 'business_analysis', 'research', 'growth_plan'], $result->suggestedStages);
     }
 
     public function test_classifies_website_improvement(): void
@@ -38,6 +39,7 @@ class ClassificationServiceTest extends TestCase
         $result = $this->service->classify('My B2B landing page gets traffic but is not converting visitors');
 
         $this->assertEquals(ProjectType::WEBSITE_IMPROVEMENT, $result->classification);
+        $this->assertEquals(['understanding', 'website_audit', 'ux_analysis', 'competitor_comparison', 'improvement_plan'], $result->suggestedStages);
     }
 
     public function test_classifies_software_optimization(): void
@@ -52,6 +54,15 @@ class ClassificationServiceTest extends TestCase
         $result = $this->service->classify('I want to expand my logistics operations to Lagos');
 
         $this->assertEquals(ProjectType::MARKET_EXPANSION, $result->classification);
+        $this->assertEquals(['understanding', 'geographic_research', 'market_comparison', 'expansion_strategy'], $result->suggestedStages);
+    }
+
+    public function test_classifies_strategic_planning(): void
+    {
+        $result = $this->service->classify('We need a comprehensive strategic planning roadmap for next year');
+
+        $this->assertEquals(ProjectType::STRATEGIC_PLANNING, $result->classification);
+        $this->assertEquals(['understanding', 'situation_analysis', 'research', 'strategy', 'roadmap'], $result->suggestedStages);
     }
 
     public function test_classifies_process_automation(): void

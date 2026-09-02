@@ -53,4 +53,22 @@ class ProjectTest extends TestCase
 
         $response->assertForbidden();
     }
+
+    public function test_user_can_create_project_with_website_url_triggering_audit(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post('/projects', [
+            'goal' => 'Improve user conversion and audit site',
+            'website_url' => 'https://example-saas.com',
+            'mode' => 'page_by_page',
+        ]);
+
+        $project = Project::first();
+
+        $this->assertNotNull($project);
+        $this->assertNotNull($project->websiteAnalysis);
+        $this->assertEquals('https://example-saas.com', $project->websiteAnalysis->url);
+        $response->assertRedirect(route('projects.show', $project));
+    }
 }
