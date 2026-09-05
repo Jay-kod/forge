@@ -1,0 +1,15 @@
+node_modules
+vendor
+.git
+.github
+.env
+bootstrap/cache/*
+!bootstrap/cache/.gitignore
+storage/*.key
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/backups/*
+.phpunit.result.cache
+.phpunit.cache

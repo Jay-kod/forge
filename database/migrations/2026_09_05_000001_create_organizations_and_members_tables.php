@@ -64,7 +64,9 @@ return new class extends Migration
         // 6. Organization Pooled Credit Transactions
         Schema::create('organization_credit_transactions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('organization_credit_account_id')->constrained('organization_credit_accounts')->cascadeOnDelete();
+            $table->foreignId('organization_credit_account_id')
+                ->constrained('organization_credit_accounts', 'id', 'org_cred_tx_account_fk')
+                ->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->string('type', 30);
             $table->integer('amount');
