@@ -25,6 +25,8 @@ Route::get('/', function () {
 
 Route::middleware(['guest', 'throttle:auth'])->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+    Route::post('/register', [AuthController::class, 'register'])->name('register.post');
     Route::get('/auth/{provider}/redirect', [AuthController::class, 'redirect'])->name('auth.redirect');
     Route::get('/auth/{provider}/callback', [AuthController::class, 'callback'])->name('auth.callback');
     Route::post('/demo-login', [AuthController::class, 'demoLogin'])->name('auth.demo');
