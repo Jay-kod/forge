@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
+import Sidebar from '@/Components/Sidebar.vue';
 import ThemeToggle from '@/Components/ThemeToggle.vue';
 import ReferralModal from '@/Components/ReferralModal.vue';
 import NotificationCenter from '@/Components/Notifications/NotificationCenter.vue';
@@ -13,256 +14,159 @@ const isReferralOpen = ref(false);
 const logout = () => {
     router.post('/logout');
 };
+
+const currentViewTitle = computed(() => {
+    try {
+        if (route().current('projects.index')) return { title: 'Workspaces', icon: '🏠', subtitle: 'Product Intelligence' };
+        if (route().current('projects.create')) return { title: 'Launch Discovery', icon: '✨', subtitle: 'New Workspace' };
+        if (route().current('projects.show')) return { title: 'Project Workspace', icon: '⚡', subtitle: 'Stage Execution' };
+        if (route().current('organizations.audit-logs')) return { title: 'Audit Logs', icon: '📜', subtitle: 'Governance & Security' };
+        if (route().current('organizations.*')) return { title: 'Teams & Organizations', icon: '🏢', subtitle: 'Multi-Tenant Management' };
+        if (route().current('api-keys.*') || route().current('byok.*')) return { title: 'API Keys & BYOK', icon: '🔑', subtitle: 'Credentials & Tokens' };
+        if (route().current('privacy.*')) return { title: 'Privacy & Data', icon: '🔒', subtitle: 'GDPR & Portability' };
+        if (route().current('pricing')) return { title: 'Plans & Credits', icon: '⚡', subtitle: 'Usage & Billing' };
+        if (route().current('admin.dashboard')) return { title: 'Admin Console', icon: '🛡️', subtitle: 'System Operations' };
+        if (route().current('admin.api-keys.*')) return { title: 'System API Keys', icon: '📡', subtitle: 'Connection Probes' };
+    } catch {
+        // route helper fallback
+    }
+    return { title: 'FORGE Intelligence', icon: '⚡', subtitle: 'Continuous Product Discovery' };
+});
 </script>
 
 <template>
-    <div class="min-h-screen bg-surface-primary text-text-primary flex flex-col font-sans transition-colors duration-200">
-        <!-- Top Navigation Bar -->
-        <header class="border-b border-primary bg-surface-secondary/90 backdrop-blur-md sticky top-0 z-50">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                <!-- Brand Logo & Tagline -->
-                <div class="flex items-center gap-6">
-                    <Link :href="route('projects.index')" class="flex items-center gap-3 group">
-                        <div class="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-display font-bold text-lg shadow-md group-hover:bg-indigo-500 transition-colors">
+    <div class="min-h-screen bg-surface-primary text-text-primary flex font-sans transition-colors duration-200">
+        <!-- Dedicated Collapsible Sidebar for Authenticated Users -->
+        <Sidebar
+            v-if="page.props.auth.user"
+            v-model:is-mobile-open="isMobileMenuOpen"
+        />
+
+        <!-- Main Viewport (Header + Scrollable Content + Footer) -->
+        <div class="flex-1 flex flex-col min-w-0 min-h-screen">
+            <!-- Top Sticky Navigation Header -->
+            <header class="border-b border-primary bg-surface-secondary/80 backdrop-blur-md sticky top-0 z-30 h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8">
+                <!-- Left: Mobile Hamburger & Page View Breadcrumb -->
+                <div class="flex items-center gap-3">
+                    <!-- Mobile Hamburger Button (< lg) -->
+                    <button
+                        v-if="page.props.auth.user"
+                        type="button"
+                        @click="isMobileMenuOpen = true"
+                        class="lg:hidden p-2 rounded-xl border border-primary bg-surface-secondary text-text-secondary hover:text-text-primary transition-colors"
+                        aria-label="Open sidebar"
+                    >
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+
+                    <!-- Guest Logo (when unauthenticated) -->
+                    <Link v-if="!page.props.auth.user" :href="route('login')" class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-display font-bold text-base shadow-sm">
                             F
                         </div>
-                        <div class="flex flex-col">
-                            <span class="font-display font-bold tracking-tight text-lg leading-none text-text-primary">FORGE</span>
-                            <span class="text-[10px] tracking-wider uppercase text-text-tertiary font-mono mt-0.5">Intelligence Platform</span>
-                        </div>
+                        <span class="font-display font-bold text-lg text-text-primary">FORGE</span>
                     </Link>
 
-                    <!-- Desktop Nav Links -->
-                    <nav v-if="page.props.auth.user" class="hidden md:flex items-center gap-1 pl-4 border-l border-primary">
-                        <Link
-                            :href="route('projects.index')"
-                            class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                            :class="route().current('projects.*') ? 'bg-surface-elevated text-indigo-400 font-semibold shadow-xs border border-primary' : 'text-text-secondary hover:text-text-primary hover:bg-surface-tertiary'"
-                        >
-                            Workspaces
-                        </Link>
-                        <Link
-                            :href="route('organizations.index')"
-                            class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                            :class="route().current('organizations.*') ? 'bg-surface-elevated text-indigo-400 font-semibold shadow-xs border border-primary' : 'text-text-secondary hover:text-text-primary hover:bg-surface-tertiary'"
-                        >
-                            🏢 Teams
-                        </Link>
-                        <Link
-                            :href="route('api-keys.index')"
-                            class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                            :class="route().current('api-keys.*') || route().current('byok.*') ? 'bg-surface-elevated text-indigo-400 font-semibold shadow-xs border border-primary' : 'text-text-secondary hover:text-text-primary hover:bg-surface-tertiary'"
-                        >
-                            🔑 API Keys
-                        </Link>
-                        <Link
-                            :href="route('privacy.index')"
-                            class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                            :class="route().current('privacy.*') ? 'bg-surface-elevated text-indigo-400 font-semibold shadow-xs border border-primary' : 'text-text-secondary hover:text-text-primary hover:bg-surface-tertiary'"
-                        >
-                            Privacy
-                        </Link>
-                        <Link
-                            :href="route('pricing')"
-                            class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                            :class="route().current('pricing') ? 'bg-surface-elevated text-indigo-400 font-semibold shadow-xs border border-primary' : 'text-text-secondary hover:text-text-primary hover:bg-surface-tertiary'"
-                        >
-                            Plans & Credits
-                        </Link>
-                        <div v-if="page.props.auth.user?.role === 'admin'" class="flex items-center gap-1 pl-2 border-l border-amber-500/30">
-                            <Link
-                                :href="route('admin.dashboard')"
-                                class="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                                :class="route().current('admin.dashboard') ? 'bg-amber-500/15 text-amber-400 font-semibold border border-amber-500/30' : 'text-amber-400/80 hover:text-amber-400 hover:bg-surface-tertiary'"
-                            >
-                                ⚡ Admin
-                            </Link>
-                            <Link
-                                :href="route('admin.api-keys.index')"
-                                class="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                                :class="route().current('admin.api-keys.*') ? 'bg-amber-500/15 text-amber-400 font-semibold border border-amber-500/30' : 'text-amber-400/80 hover:text-amber-400 hover:bg-surface-tertiary'"
-                            >
-                                🔑 System Keys
-                            </Link>
+                    <!-- Active View Title & Category Subtitle -->
+                    <div v-if="page.props.auth.user" class="flex items-center gap-2">
+                        <span class="text-base">{{ currentViewTitle.icon }}</span>
+                        <div class="flex flex-col">
+                            <h1 class="text-sm font-display font-bold text-text-primary leading-tight">
+                                {{ currentViewTitle.title }}
+                            </h1>
+                            <span class="text-[10px] font-mono text-text-tertiary leading-none">
+                                {{ currentViewTitle.subtitle }}
+                            </span>
                         </div>
-                    </nav>
+                    </div>
                 </div>
 
-                <!-- Right Side: Credits, Theme, User Controls -->
-                <div class="flex items-center gap-3">
-                    <!-- Credits Display -->
-                    <div v-if="page.props.auth.user" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-tertiary border border-primary text-xs font-mono">
+                <!-- Right: Credits Counter, Invite, Notifications, Theme, Profile -->
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <!-- Credits Balance Badge -->
+                    <div v-if="page.props.auth.user" class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-tertiary border border-primary text-xs font-mono">
                         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                        <span class="text-text-tertiary">Credits:</span>
+                        <span class="text-text-tertiary hidden sm:inline">Credits:</span>
                         <span class="font-bold text-text-primary">⚡ {{ page.props.credits.balance }}</span>
                     </div>
 
-                    <!-- Referral Invite Button -->
+                    <!-- Invite & Earn Button -->
                     <button
                         v-if="page.props.auth.user"
                         type="button"
                         @click="isReferralOpen = true"
-                        class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 text-xs font-mono transition-colors"
+                        class="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 text-xs font-mono transition-colors"
                         title="Invite founders & earn 50 bonus credits"
                     >
                         <span>🎁 Invite & Earn</span>
                     </button>
 
-                    <!-- Notification Center -->
+                    <!-- Notifications Dropdown -->
                     <NotificationCenter v-if="page.props.auth.user" />
 
-                    <!-- Theme Toggle Component -->
+                    <!-- Theme Toggle -->
                     <ThemeToggle />
 
-                    <!-- Authenticated User Menu -->
-                    <div v-if="page.props.auth.user" class="hidden sm:flex items-center gap-3 pl-2 border-l border-primary">
-                        <div class="flex flex-col text-right">
+                    <!-- User Profile Pill -->
+                    <div v-if="page.props.auth.user" class="flex items-center gap-2.5 pl-2 border-l border-primary">
+                        <div class="hidden md:flex flex-col text-right">
                             <span class="text-xs font-bold text-text-primary leading-none">{{ page.props.auth.user.name }}</span>
                             <span class="text-[10px] font-mono text-text-tertiary mt-0.5 capitalize">{{ page.props.auth.user.role }}</span>
                         </div>
-                        <button
-                            @click="logout"
-                            class="text-xs font-mono px-3 py-1.5 rounded-xl border border-primary bg-surface-secondary hover:bg-surface-tertiary text-text-secondary hover:text-text-primary transition-colors"
-                        >
-                            Sign out
-                        </button>
+                        <div class="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 flex items-center justify-center font-bold text-xs">
+                            {{ page.props.auth.user.name.charAt(0).toUpperCase() }}
+                        </div>
                     </div>
 
-                    <!-- Mobile Menu Hamburger Button -->
-                    <button
-                        v-if="page.props.auth.user"
-                        type="button"
-                        @click="isMobileMenuOpen = !isMobileMenuOpen"
-                        class="md:hidden p-2 rounded-xl border border-primary bg-surface-secondary text-text-secondary"
-                        aria-label="Toggle navigation menu"
-                    >
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path v-if="!isMobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                            <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-
-                    <!-- Guest Menu -->
-                    <div v-if="!page.props.auth.user" class="flex items-center gap-2">
+                    <!-- Guest Sign In CTA -->
+                    <div v-else class="flex items-center gap-2">
                         <Link :href="route('login')" class="text-xs font-bold px-4 py-2 rounded-xl brand-button shadow-xs">
                             Sign in
                         </Link>
                     </div>
                 </div>
+            </header>
+
+            <!-- Global Flash Messages -->
+            <div v-if="page.props.flash.success || page.props.flash.error" class="w-full px-4 sm:px-6 lg:px-8 mt-4">
+                <div v-if="page.props.flash.success" class="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2">
+                    <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>{{ page.props.flash.success }}</span>
+                </div>
+                <div v-if="page.props.flash.error" class="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-2">
+                    <svg class="w-4 h-4 text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    <span>{{ page.props.flash.error }}</span>
+                </div>
             </div>
 
-            <!-- Mobile Navigation Drawer -->
-            <div v-if="isMobileMenuOpen && page.props.auth.user" class="md:hidden border-t border-primary bg-surface-secondary px-4 py-4 space-y-3">
-                <div class="flex items-center justify-between pb-3 border-b border-primary">
-                    <div>
-                        <div class="font-bold text-xs text-text-primary">{{ page.props.auth.user.name }}</div>
-                        <div class="text-[10px] text-text-tertiary font-mono">{{ page.props.auth.user.email }}</div>
+            <!-- Page Body Slot -->
+            <main class="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto">
+                <slot />
+            </main>
+
+            <!-- Compact Clean Footer -->
+            <footer class="border-t border-primary bg-surface-secondary/50 py-4 px-4 sm:px-6 lg:px-8 mt-auto text-xs text-text-tertiary">
+                <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-text-secondary">FORGE</span>
+                        <span>— Framework for Opportunity, Research, Growth & Execution</span>
                     </div>
-                    <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-tertiary border border-primary text-xs font-mono">
-                        <span class="text-emerald-400">⚡ {{ page.props.credits.balance }} credits</span>
+                    <div class="flex items-center gap-4">
+                        <span>Evidence-First Intelligence</span>
+                        <span>&bull;</span>
+                        <Link :href="route('pricing')" class="hover:underline">Pricing & Plans</Link>
                     </div>
                 </div>
-
-                <div class="space-y-1">
-                    <Link
-                        :href="route('projects.index')"
-                        @click="isMobileMenuOpen = false"
-                        class="block px-3 py-2 rounded-lg text-xs font-semibold text-text-primary hover:bg-surface-tertiary"
-                    >
-                        Workspaces
-                    </Link>
-                    <Link
-                        :href="route('organizations.index')"
-                        @click="isMobileMenuOpen = false"
-                        class="block px-3 py-2 rounded-lg text-xs font-semibold text-text-primary hover:bg-surface-tertiary"
-                    >
-                        🏢 Teams & Organizations
-                    </Link>
-                    <Link
-                        :href="route('api-keys.index')"
-                        @click="isMobileMenuOpen = false"
-                        class="block px-3 py-2 rounded-lg text-xs font-semibold text-text-primary hover:bg-surface-tertiary"
-                    >
-                        🔑 API Keys & Integrations
-                    </Link>
-                    <Link
-                        :href="route('privacy.index')"
-                        @click="isMobileMenuOpen = false"
-                        class="block px-3 py-2 rounded-lg text-xs font-semibold text-text-primary hover:bg-surface-tertiary"
-                    >
-                        🔒 Privacy & Data Portability
-                    </Link>
-                    <Link
-                        :href="route('pricing')"
-                        @click="isMobileMenuOpen = false"
-                        class="block px-3 py-2 rounded-lg text-xs font-semibold text-text-primary hover:bg-surface-tertiary"
-                    >
-                        Plans & Credits
-                    </Link>
-                    <template v-if="page.props.auth.user?.role === 'admin'">
-                        <Link
-                            :href="route('admin.dashboard')"
-                            @click="isMobileMenuOpen = false"
-                            class="block px-3 py-2 rounded-lg text-xs font-semibold text-amber-400 hover:bg-surface-tertiary"
-                        >
-                            ⚡ Admin Operations
-                        </Link>
-                        <Link
-                            :href="route('admin.api-keys.index')"
-                            @click="isMobileMenuOpen = false"
-                            class="block px-3 py-2 rounded-lg text-xs font-semibold text-amber-400 hover:bg-surface-tertiary"
-                        >
-                            🔑 Admin System Keys
-                        </Link>
-                    </template>
-                </div>
-
-                <div class="pt-3 border-t border-primary">
-                    <button
-                        @click="logout"
-                        class="w-full text-left px-3 py-2 rounded-lg text-xs text-red-400 hover:bg-surface-tertiary font-semibold"
-                    >
-                        Sign out
-                    </button>
-                </div>
-            </div>
-        </header>
-
-        <!-- Flash Messages -->
-        <div v-if="page.props.flash.success || page.props.flash.error" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full">
-            <div v-if="page.props.flash.success" class="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2">
-                <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-                <span>{{ page.props.flash.success }}</span>
-            </div>
-            <div v-if="page.props.flash.error" class="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-2">
-                <svg class="w-4 h-4 text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                <span>{{ page.props.flash.error }}</span>
-            </div>
+            </footer>
         </div>
 
-        <!-- Main Workspace Content -->
-        <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <slot />
-        </main>
-
-        <!-- Footer -->
-        <footer class="border-t border-primary bg-surface-secondary py-6 mt-auto text-xs text-text-tertiary">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div class="flex items-center gap-2">
-                    <span class="font-bold text-text-secondary">FORGE</span>
-                    <span>— Framework for Opportunity, Research, Growth & Execution</span>
-                </div>
-                <div class="flex items-center gap-4">
-                    <span>Evidence-First Intelligence</span>
-                    <span>&bull;</span>
-                    <Link :href="route('pricing')" class="hover:underline">Pricing</Link>
-                </div>
-            </div>
-        </footer>
+        <!-- Referral Modal -->
         <ReferralModal
             :is-open="isReferralOpen"
             :referral-code="page.props.auth.user?.referral_code"
