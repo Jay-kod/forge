@@ -53,20 +53,10 @@ const logout = () => {
         class="hidden md:flex flex-col h-screen sticky top-0 shrink-0 z-40 transition-all duration-300 ease-in-out border-r border-primary bg-surface-secondary select-none"
         :class="collapsed ? 'w-20' : 'w-64'"
     >
-        <!-- Top macOS Window Controls Header -->
-        <div class="h-12 px-4 flex items-center border-b border-primary/50">
-            <!-- macOS Window Dots (Inspired by Reference Screenshot) -->
-            <div class="flex items-center gap-1.5" :class="{ 'mx-auto': collapsed }">
-                <span class="w-3 h-3 rounded-full bg-[#ff5f56] border border-[#e0443e]/30 shadow-xs inline-block"></span>
-                <span class="w-3 h-3 rounded-full bg-[#ffbd2e] border border-[#dea123]/30 shadow-xs inline-block"></span>
-                <span class="w-3 h-3 rounded-full bg-[#27c93f] border border-[#1aab29]/30 shadow-xs inline-block"></span>
-            </div>
-        </div>
-
-        <!-- Brand Identity Section -->
-        <div class="px-3.5 py-3 flex items-center border-b border-primary/40 overflow-hidden">
-            <Link :href="route('projects.index')" class="flex items-center gap-2.5 group shrink-0" :class="{ 'mx-auto': collapsed }">
-                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-emerald-500 flex items-center justify-center text-white font-display font-extrabold text-base shadow-md group-hover:scale-105 transition-transform shrink-0">
+        <!-- Brand Identity Section (Aligned with Top Header h-16) -->
+        <div class="h-16 px-4 flex items-center border-b border-primary/50 overflow-hidden shrink-0">
+            <Link :href="route('projects.index')" class="flex items-center gap-3 group shrink-0" :class="{ 'mx-auto': collapsed }">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-emerald-500 flex items-center justify-center text-white font-display font-extrabold text-base shadow-md group-hover:scale-105 transition-transform shrink-0">
                     F
                 </div>
                 <div v-if="!collapsed" class="flex flex-col whitespace-nowrap overflow-hidden transition-opacity duration-200">
@@ -290,13 +280,13 @@ const logout = () => {
 
         <!-- Slide-Over Content -->
         <div class="relative w-72 max-w-[80vw] h-full bg-surface-secondary border-r border-primary flex flex-col z-10 shadow-2xl">
-            <!-- Header with macOS dots and Close button -->
-            <div class="p-4 flex items-center justify-between border-b border-primary">
-                <div class="flex items-center gap-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-[#ff5f56]"></span>
-                    <span class="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]"></span>
-                    <span class="w-2.5 h-2.5 rounded-full bg-[#27c93f]"></span>
-                    <span class="font-display font-bold text-sm text-text-primary ml-2">FORGE</span>
+            <!-- Header with Brand Emblem and Close button -->
+            <div class="h-16 px-4 flex items-center justify-between border-b border-primary shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-emerald-500 flex items-center justify-center text-white font-display font-extrabold text-sm shadow-md">
+                        F
+                    </div>
+                    <span class="font-display font-bold text-sm text-text-primary tracking-tight">FORGE</span>
                 </div>
                 <button
                     type="button"
