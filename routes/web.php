@@ -79,6 +79,14 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/organizations/{organization}/members/{user}/role', [\App\Http\Controllers\OrganizationController::class, 'updateRole'])->name('organizations.members.update-role');
     Route::get('/organizations/{organization}/audit-logs', [\App\Http\Controllers\AuditLogController::class, 'index'])->name('organizations.audit-logs.index');
     Route::get('/organizations/{organization}/audit-logs/export', [\App\Http\Controllers\AuditLogController::class, 'export'])->name('organizations.audit-logs.export');
+    Route::get('/audit-logs', function () {
+        $user = auth()->user();
+        $org = $user ? $user->organizations()->first() : null;
+        if ($org) {
+            return redirect()->route('organizations.audit-logs.index', $org->id);
+        }
+        return redirect()->route('organizations.index');
+    })->name('audit-logs.index');
 
     // API Key Management
     Route::get('/settings/api-keys', [\App\Http\Controllers\ApiKeyManagementController::class, 'index'])->name('api-keys.index');

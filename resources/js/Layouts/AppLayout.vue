@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 import Sidebar from '@/Components/Sidebar.vue';
 import ThemeToggle from '@/Components/ThemeToggle.vue';
@@ -9,7 +9,24 @@ import type { SharedProps } from '@/types';
 
 const page = usePage<SharedProps>();
 const isMobileMenuOpen = ref(false);
+const isSidebarCollapsed = ref(false);
 const isReferralOpen = ref(false);
+
+onMounted(() => {
+    const saved = localStorage.getItem('forge_sidebar_collapsed');
+    if (saved !== null) {
+        isSidebarCollapsed.value = saved === 'true';
+    }
+});
+
+const toggleHamburger = () => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+        isMobileMenuOpen.value = !isMobileMenuOpen.value;
+    } else {
+        isSidebarCollapsed.value = !isSidebarCollapsed.value;
+        localStorage.setItem('forge_sidebar_collapsed', String(isSidebarCollapsed.value));
+    }
+};
 
 const logout = () => {
     router.post('/logout');
@@ -20,7 +37,7 @@ const currentViewTitle = computed(() => {
         if (route().current('projects.index')) return { title: 'Workspaces', icon: '🏠', subtitle: 'Product Intelligence' };
         if (route().current('projects.create')) return { title: 'Launch Discovery', icon: '✨', subtitle: 'New Workspace' };
         if (route().current('projects.show')) return { title: 'Project Workspace', icon: '⚡', subtitle: 'Stage Execution' };
-        if (route().current('organizations.audit-logs')) return { title: 'Audit Logs', icon: '📜', subtitle: 'Governance & Security' };
+        if (route().current('audit-logs.*') || route().current('organizations.audit-logs.*')) return { title: 'Audit Logs', icon: '📜', subtitle: 'Governance & Security' };
         if (route().current('organizations.*')) return { title: 'Teams & Organizations', icon: '🏢', subtitle: 'Multi-Tenant Management' };
         if (route().current('api-keys.*') || route().current('byok.*')) return { title: 'API Keys & BYOK', icon: '🔑', subtitle: 'Credentials & Tokens' };
         if (route().current('privacy.*')) return { title: 'Privacy & Data', icon: '🔒', subtitle: 'GDPR & Portability' };
@@ -28,7 +45,7 @@ const currentViewTitle = computed(() => {
         if (route().current('admin.dashboard')) return { title: 'Admin Console', icon: '🛡️', subtitle: 'System Operations' };
         if (route().current('admin.api-keys.*')) return { title: 'System API Keys', icon: '📡', subtitle: 'Connection Probes' };
     } catch {
-        // route helper fallback
+        // fallback
     }
     return { title: 'FORGE Intelligence', icon: '⚡', subtitle: 'Continuous Product Discovery' };
 });
@@ -40,21 +57,23 @@ const currentViewTitle = computed(() => {
         <Sidebar
             v-if="page.props.auth.user"
             v-model:is-mobile-open="isMobileMenuOpen"
+            v-model:is-collapsed="isSidebarCollapsed"
         />
 
         <!-- Main Viewport (Header + Scrollable Content + Footer) -->
         <div class="flex-1 flex flex-col min-w-0 min-h-screen">
             <!-- Top Sticky Navigation Header -->
-            <header class="border-b border-primary bg-surface-secondary/80 backdrop-blur-md sticky top-0 z-30 h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8">
-                <!-- Left: Mobile Hamburger & Page View Breadcrumb -->
+            <header class="border-b border-primary bg-surface-secondary/85 backdrop-blur-md sticky top-0 z-30 h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8">
+                <!-- Left: Hamburger Button & Page View Breadcrumb -->
                 <div class="flex items-center gap-3">
-                    <!-- Mobile Hamburger Button (< lg) -->
+                    <!-- Hamburger Button (Active everywhere: mobile opens drawer, desktop toggles collapse) -->
                     <button
                         v-if="page.props.auth.user"
                         type="button"
-                        @click="isMobileMenuOpen = true"
-                        class="lg:hidden p-2 rounded-xl border border-primary bg-surface-secondary text-text-secondary hover:text-text-primary transition-colors"
-                        aria-label="Open sidebar"
+                        @click="toggleHamburger"
+                        class="p-2 rounded-xl border border-primary bg-surface-secondary text-text-secondary hover:text-text-primary hover:bg-surface-tertiary transition-colors shadow-xs"
+                        title="Toggle sidebar (expand / collapse)"
+                        aria-label="Toggle navigation sidebar"
                     >
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -70,7 +89,7 @@ const currentViewTitle = computed(() => {
                     </Link>
 
                     <!-- Active View Title & Category Subtitle -->
-                    <div v-if="page.props.auth.user" class="flex items-center gap-2">
+                    <div v-if="page.props.auth.user" class="flex items-center gap-2.5">
                         <span class="text-base">{{ currentViewTitle.icon }}</span>
                         <div class="flex flex-col">
                             <h1 class="text-sm font-display font-bold text-text-primary leading-tight">

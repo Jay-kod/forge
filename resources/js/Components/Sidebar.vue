@@ -1,31 +1,39 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 import type { SharedProps } from '@/types';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     isMobileOpen: boolean;
-}>();
+    isCollapsed?: boolean;
+}>(), {
+    isCollapsed: false,
+});
 
 const emit = defineEmits<{
     (e: 'update:isMobileOpen', value: boolean): void;
-    (e: 'toggleCollapse', value: boolean): void;
+    (e: 'update:isCollapsed', value: boolean): void;
 }>();
 
 const page = usePage<SharedProps>();
-const isCollapsed = ref(false);
+const collapsed = ref(props.isCollapsed);
 
 onMounted(() => {
     const saved = localStorage.getItem('forge_sidebar_collapsed');
     if (saved !== null) {
-        isCollapsed.value = saved === 'true';
+        collapsed.value = saved === 'true';
+        emit('update:isCollapsed', collapsed.value);
     }
 });
 
+watch(() => props.isCollapsed, (val) => {
+    collapsed.value = val;
+});
+
 const toggleSidebar = () => {
-    isCollapsed.value = !isCollapsed.value;
-    localStorage.setItem('forge_sidebar_collapsed', String(isCollapsed.value));
-    emit('toggleCollapse', isCollapsed.value);
+    collapsed.value = !collapsed.value;
+    localStorage.setItem('forge_sidebar_collapsed', String(collapsed.value));
+    emit('update:isCollapsed', collapsed.value);
 };
 
 const closeMobile = () => {
@@ -39,28 +47,29 @@ const logout = () => {
 
 <template>
     <!-- ================================================================= -->
-    <!-- DESKTOP SIDEBAR (hidden on mobile, fixed/sticky on lg)            -->
+    <!-- DESKTOP / TABLET SIDEBAR (md:flex, hidden on mobile < md)         -->
     <!-- ================================================================= -->
     <aside
-        class="hidden lg:flex flex-col h-screen sticky top-0 shrink-0 z-40 transition-all duration-300 ease-in-out border-r border-primary bg-surface-secondary select-none"
-        :class="isCollapsed ? 'w-20' : 'w-64'"
+        class="hidden md:flex flex-col h-screen sticky top-0 shrink-0 z-40 transition-all duration-300 ease-in-out border-r border-primary bg-surface-secondary select-none"
+        :class="collapsed ? 'w-20' : 'w-64'"
     >
         <!-- Top macOS Window Controls & Hamburger Header -->
-        <div class="p-4 flex items-center justify-between border-b border-primary/50">
+        <div class="p-3.5 flex items-center justify-between border-b border-primary/50">
             <!-- macOS Window Dots (Inspired by Reference Screenshot) -->
-            <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-1.5" :class="{ 'mx-auto': collapsed }">
                 <span class="w-3 h-3 rounded-full bg-[#ff5f56] border border-[#e0443e]/30 shadow-xs inline-block"></span>
                 <span class="w-3 h-3 rounded-full bg-[#ffbd2e] border border-[#dea123]/30 shadow-xs inline-block"></span>
                 <span class="w-3 h-3 rounded-full bg-[#27c93f] border border-[#1aab29]/30 shadow-xs inline-block"></span>
             </div>
 
-            <!-- Hamburger Button (Desktop Toggle) -->
+            <!-- Hamburger Button inside Sidebar -->
             <button
+                v-if="!collapsed"
                 type="button"
                 @click="toggleSidebar"
                 class="p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
-                :title="isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
-                aria-label="Toggle sidebar collapse"
+                title="Collapse sidebar"
+                aria-label="Collapse sidebar"
             >
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -68,24 +77,37 @@ const logout = () => {
             </button>
         </div>
 
-        <!-- Brand Identity Section -->
-        <div class="px-4 py-3.5 flex items-center gap-3 border-b border-primary/40 overflow-hidden">
-            <Link :href="route('projects.index')" class="flex items-center gap-3 group shrink-0" :class="{ 'mx-auto': isCollapsed }">
-                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-emerald-500 flex items-center justify-center text-white font-display font-extrabold text-base shadow-md group-hover:scale-105 transition-transform shrink-0">
+        <!-- Brand Identity Section & Hamburger for Collapsed Rail -->
+        <div class="px-3.5 py-3 flex items-center justify-between border-b border-primary/40 overflow-hidden">
+            <Link :href="route('projects.index')" class="flex items-center gap-2.5 group shrink-0" :class="{ 'mx-auto': collapsed }">
+                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-emerald-500 flex items-center justify-center text-white font-display font-extrabold text-base shadow-md group-hover:scale-105 transition-transform shrink-0">
                     F
                 </div>
-                <div v-if="!isCollapsed" class="flex flex-col whitespace-nowrap overflow-hidden transition-opacity duration-200">
+                <div v-if="!collapsed" class="flex flex-col whitespace-nowrap overflow-hidden transition-opacity duration-200">
                     <span class="font-display font-bold tracking-tight text-base text-text-primary leading-tight">FORGE</span>
                     <span class="text-[9px] uppercase tracking-widest text-emerald-400 font-mono font-medium">Product Intelligence</span>
                 </div>
             </Link>
+
+            <!-- Hamburger button when collapsed -->
+            <button
+                v-if="collapsed"
+                type="button"
+                @click="toggleSidebar"
+                class="hidden p-1 rounded-md text-text-secondary hover:text-text-primary"
+                title="Expand sidebar"
+            >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
         </div>
 
-        <!-- Navigation Links (Scrollable if needed) -->
-        <div class="flex-1 overflow-y-auto px-3 py-4 space-y-6 overflow-x-hidden custom-scrollbar">
+        <!-- Navigation Links -->
+        <div class="flex-1 overflow-y-auto px-2.5 py-3 space-y-5 overflow-x-hidden custom-scrollbar">
             <!-- SECTION 1: CORE WORKSPACE -->
             <div>
-                <div v-if="!isCollapsed" class="px-3 mb-2 text-[10px] uppercase font-mono tracking-wider text-text-tertiary font-semibold">
+                <div v-if="!collapsed" class="px-3 mb-1.5 text-[10px] uppercase font-mono tracking-wider text-text-tertiary font-semibold">
                     Workspace
                 </div>
                 <nav class="space-y-1">
@@ -96,13 +118,13 @@ const logout = () => {
                         :class="route().current('projects.index')
                             ? 'bg-surface-elevated text-indigo-400 font-semibold shadow-xs border border-primary'
                             : 'text-text-secondary hover:text-text-primary hover:bg-surface-tertiary'"
-                        :title="isCollapsed ? 'Workspaces' : undefined"
+                        :title="collapsed ? 'Workspaces' : undefined"
                     >
                         <svg class="w-5 h-5 shrink-0 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                         </svg>
-                        <span v-if="!isCollapsed" class="truncate">Workspaces</span>
-                        <span v-if="isCollapsed" class="sr-only">Workspaces</span>
+                        <span v-if="!collapsed" class="truncate">Workspaces</span>
+                        <span v-if="collapsed" class="sr-only">Workspaces</span>
                     </Link>
 
                     <!-- New Discovery / Project -->
@@ -112,50 +134,50 @@ const logout = () => {
                         :class="route().current('projects.create')
                             ? 'bg-surface-elevated text-emerald-400 font-semibold shadow-xs border border-primary'
                             : 'text-text-secondary hover:text-text-primary hover:bg-surface-tertiary'"
-                        :title="isCollapsed ? 'Launch Discovery' : undefined"
+                        :title="collapsed ? 'Launch Discovery' : undefined"
                     >
                         <svg class="w-5 h-5 shrink-0 text-emerald-400 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4v16m8-8H4" />
                         </svg>
-                        <span v-if="!isCollapsed" class="truncate font-semibold text-text-primary group-hover:text-emerald-400">Launch Discovery</span>
-                        <span v-if="!isCollapsed" class="ml-auto text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">NEW</span>
+                        <span v-if="!collapsed" class="truncate font-semibold text-text-primary group-hover:text-emerald-400">Launch Discovery</span>
+                        <span v-if="!collapsed" class="ml-auto text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">NEW</span>
                     </Link>
 
                     <!-- Teams & Organizations -->
                     <Link
                         :href="route('organizations.index')"
                         class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all group relative"
-                        :class="route().current('organizations.*')
+                        :class="route().current('organizations.*') && !route().current('organizations.audit-logs.*')
                             ? 'bg-surface-elevated text-indigo-400 font-semibold shadow-xs border border-primary'
                             : 'text-text-secondary hover:text-text-primary hover:bg-surface-tertiary'"
-                        :title="isCollapsed ? 'Teams & Organizations' : undefined"
+                        :title="collapsed ? 'Teams & Organizations' : undefined"
                     >
                         <svg class="w-5 h-5 shrink-0 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
-                        <span v-if="!isCollapsed" class="truncate">Teams & Orgs</span>
+                        <span v-if="!collapsed" class="truncate">Teams & Orgs</span>
                     </Link>
 
                     <!-- Activity & Audit Logs -->
                     <Link
-                        :href="route('organizations.audit-logs')"
+                        :href="route('audit-logs.index')"
                         class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all group relative"
-                        :class="route().current('organizations.audit-logs')
+                        :class="route().current('audit-logs.*') || route().current('organizations.audit-logs.*')
                             ? 'bg-surface-elevated text-indigo-400 font-semibold shadow-xs border border-primary'
                             : 'text-text-secondary hover:text-text-primary hover:bg-surface-tertiary'"
-                        :title="isCollapsed ? 'Activity Logs' : undefined"
+                        :title="collapsed ? 'Activity Logs' : undefined"
                     >
                         <svg class="w-5 h-5 shrink-0 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <span v-if="!isCollapsed" class="truncate">Activity & Audits</span>
+                        <span v-if="!collapsed" class="truncate">Activity & Audits</span>
                     </Link>
                 </nav>
             </div>
 
             <!-- SECTION 2: PLATFORM & INTEGRATIONS -->
             <div>
-                <div v-if="!isCollapsed" class="px-3 mb-2 text-[10px] uppercase font-mono tracking-wider text-text-tertiary font-semibold">
+                <div v-if="!collapsed" class="px-3 mb-1.5 text-[10px] uppercase font-mono tracking-wider text-text-tertiary font-semibold">
                     Developer & Security
                 </div>
                 <nav class="space-y-1">
@@ -166,12 +188,12 @@ const logout = () => {
                         :class="route().current('api-keys.*') || route().current('byok.*')
                             ? 'bg-surface-elevated text-indigo-400 font-semibold shadow-xs border border-primary'
                             : 'text-text-secondary hover:text-text-primary hover:bg-surface-tertiary'"
-                        :title="isCollapsed ? 'API Keys & BYOK' : undefined"
+                        :title="collapsed ? 'API Keys & BYOK' : undefined"
                     >
                         <svg class="w-5 h-5 shrink-0 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                         </svg>
-                        <span v-if="!isCollapsed" class="truncate">API Keys & BYOK</span>
+                        <span v-if="!collapsed" class="truncate">API Keys & BYOK</span>
                     </Link>
 
                     <!-- Privacy & Compliance -->
@@ -181,12 +203,12 @@ const logout = () => {
                         :class="route().current('privacy.*')
                             ? 'bg-surface-elevated text-indigo-400 font-semibold shadow-xs border border-primary'
                             : 'text-text-secondary hover:text-text-primary hover:bg-surface-tertiary'"
-                        :title="isCollapsed ? 'Privacy & Security' : undefined"
+                        :title="collapsed ? 'Privacy & Security' : undefined"
                     >
                         <svg class="w-5 h-5 shrink-0 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                         </svg>
-                        <span v-if="!isCollapsed" class="truncate">Privacy & Data</span>
+                        <span v-if="!collapsed" class="truncate">Privacy & Data</span>
                     </Link>
 
                     <!-- Plans & Credits -->
@@ -196,19 +218,19 @@ const logout = () => {
                         :class="route().current('pricing')
                             ? 'bg-surface-elevated text-indigo-400 font-semibold shadow-xs border border-primary'
                             : 'text-text-secondary hover:text-text-primary hover:bg-surface-tertiary'"
-                        :title="isCollapsed ? 'Plans & Credits' : undefined"
+                        :title="collapsed ? 'Plans & Credits' : undefined"
                     >
                         <svg class="w-5 h-5 shrink-0 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
-                        <span v-if="!isCollapsed" class="truncate">Plans & Credits</span>
+                        <span v-if="!collapsed" class="truncate">Plans & Credits</span>
                     </Link>
                 </nav>
             </div>
 
             <!-- SECTION 3: ADMIN CONSOLE (Superadmins Only) -->
             <div v-if="page.props.auth.user?.role === 'admin'">
-                <div v-if="!isCollapsed" class="px-3 mb-2 text-[10px] uppercase font-mono tracking-wider text-amber-400/90 font-semibold">
+                <div v-if="!collapsed" class="px-3 mb-1.5 text-[10px] uppercase font-mono tracking-wider text-amber-400/90 font-semibold">
                     Admin Operations
                 </div>
                 <nav class="space-y-1">
@@ -218,12 +240,12 @@ const logout = () => {
                         :class="route().current('admin.dashboard')
                             ? 'bg-amber-500/15 text-amber-400 font-semibold shadow-xs border border-amber-500/30'
                             : 'text-text-secondary hover:text-amber-400 hover:bg-surface-tertiary'"
-                        :title="isCollapsed ? 'Admin Dashboard' : undefined"
+                        :title="collapsed ? 'Admin Dashboard' : undefined"
                     >
                         <svg class="w-5 h-5 shrink-0 text-amber-400 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
-                        <span v-if="!isCollapsed" class="truncate">Admin Console</span>
+                        <span v-if="!collapsed" class="truncate">Admin Console</span>
                     </Link>
                     <Link
                         :href="route('admin.api-keys.index')"
@@ -231,12 +253,12 @@ const logout = () => {
                         :class="route().current('admin.api-keys.*')
                             ? 'bg-amber-500/15 text-amber-400 font-semibold shadow-xs border border-amber-500/30'
                             : 'text-text-secondary hover:text-amber-400 hover:bg-surface-tertiary'"
-                        :title="isCollapsed ? 'System Keys Probe' : undefined"
+                        :title="collapsed ? 'System Keys Probe' : undefined"
                     >
                         <svg class="w-5 h-5 shrink-0 text-amber-400 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
                         </svg>
-                        <span v-if="!isCollapsed" class="truncate">System Keys</span>
+                        <span v-if="!collapsed" class="truncate">System Keys</span>
                     </Link>
                 </nav>
             </div>
@@ -244,7 +266,7 @@ const logout = () => {
 
         <!-- Bottom User Card & Quick Actions -->
         <div class="p-3 border-t border-primary/50 bg-surface-primary/60">
-            <div v-if="!isCollapsed" class="flex items-center justify-between gap-2 p-2 rounded-xl bg-surface-secondary border border-primary/60">
+            <div v-if="!collapsed" class="flex items-center justify-between gap-2 p-2 rounded-xl bg-surface-secondary border border-primary/60">
                 <div class="flex items-center gap-2.5 min-w-0">
                     <div class="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 flex items-center justify-center font-bold text-xs shrink-0">
                         {{ page.props.auth.user?.name ? page.props.auth.user.name.charAt(0).toUpperCase() : 'U' }}
@@ -284,9 +306,9 @@ const logout = () => {
     </aside>
 
     <!-- ================================================================= -->
-    <!-- MOBILE OFF-CANVAS DRAWER                                          -->
+    <!-- MOBILE OFF-CANVAS DRAWER (< md)                                   -->
     <!-- ================================================================= -->
-    <div v-if="isMobileOpen" class="fixed inset-0 z-50 lg:hidden flex">
+    <div v-if="isMobileOpen" class="fixed inset-0 z-50 md:hidden flex">
         <!-- Backdrop -->
         <div
             class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
@@ -348,10 +370,10 @@ const logout = () => {
                         <span>Teams & Orgs</span>
                     </Link>
                     <Link
-                        :href="route('organizations.audit-logs')"
+                        :href="route('audit-logs.index')"
                         @click="closeMobile"
                         class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold"
-                        :class="route().current('organizations.audit-logs') ? 'bg-surface-elevated text-indigo-400 border border-primary' : 'text-text-secondary hover:bg-surface-tertiary'"
+                        :class="route().current('audit-logs.*') || route().current('organizations.audit-logs.*') ? 'bg-surface-elevated text-indigo-400 border border-primary' : 'text-text-secondary hover:bg-surface-tertiary'"
                     >
                         <span>📜</span>
                         <span>Activity & Audits</span>
