@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import WorkflowProgressBar from '@/Components/WorkflowProgressBar.vue';
@@ -53,12 +53,52 @@ const handleStageRerun = () => {
     router.reload({ only: ['project'] });
 };
 
+import { onMounted, onUnmounted } from 'vue';
+
+let pollInterval: any = null;
+
+const startPolling = () => {
+    if (pollInterval) return;
+    pollInterval = setInterval(async () => {
+        try {
+            const res = await fetch(`/projects/${props.project.id}/workflow/status`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.active_stage?.status !== 'processing') {
+                    clearInterval(pollInterval);
+                    pollInterval = null;
+                    isRunning.value = false;
+                    router.reload({ only: ['project'] });
+                }
+            }
+        } catch (e) {
+            // ignore
+        }
+    }, 2000);
+};
+
 const advanceStage = (stage: WorkflowStage) => {
     isRunning.value = true;
     router.post(route('workflow.advance', { project: props.project.id, stage: stage.id }), {}, {
-        onFinish: () => { isRunning.value = false; }
+        onSuccess: () => {
+            startPolling();
+        },
+        onFinish: () => {
+            // keep isRunning true if polling takes over
+        }
     });
 };
+
+onMounted(() => {
+    if (props.project.workflow?.stages?.some((s: any) => s.status === 'processing')) {
+        isRunning.value = true;
+        startPolling();
+    }
+});
+
+onUnmounted(() => {
+    if (pollInterval) clearInterval(pollInterval);
+});
 
 const approveStage = (stage: WorkflowStage) => {
     router.post(route('workflow.approve', { project: props.project.id, stage: stage.id }));

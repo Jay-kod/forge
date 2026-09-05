@@ -33,6 +33,16 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(\App\Modules\AI\Services\AIOutputValidator::class);
 
+        $this->app->singleton(
+            \App\Modules\Strategy\Contracts\StrategyServiceInterface::class,
+            \App\Modules\Strategy\Services\StrategyEngine::class
+        );
+
+        $this->app->singleton(
+            \App\Modules\Blueprint\Contracts\BlueprintServiceInterface::class,
+            \App\Modules\Blueprint\Services\BlueprintService::class
+        );
+
         $this->app->singleton(\App\Modules\AI\Services\AIOrchestrator::class, function ($app) {
             $orchestrator = new \App\Modules\AI\Services\AIOrchestrator(
                 $app->make(\App\Modules\Credits\Contracts\CreditServiceInterface::class),
@@ -40,6 +50,7 @@ class AppServiceProvider extends ServiceProvider
             );
             $orchestrator->registerProvider(new \App\Modules\AI\Providers\AnthropicProvider());
             $orchestrator->registerProvider(new \App\Modules\AI\Providers\OpenAIProvider());
+            $orchestrator->registerProvider(new \App\Modules\AI\Providers\GeminiProvider());
             return $orchestrator;
         });
     }
@@ -53,5 +64,17 @@ class AppServiceProvider extends ServiceProvider
             \App\Modules\Projects\Models\Project::class,
             \App\Modules\Projects\Policies\ProjectPolicy::class
         );
+
+        \Illuminate\Support\Facades\RateLimiter::for('auth', function (\Illuminate\Http\Request $request) {
+            return \Illuminate\Cache\RateLimiting\Limit::perMinute(5)->by($request->ip());
+        });
+
+        \Illuminate\Support\Facades\RateLimiter::for('ai', function (\Illuminate\Http\Request $request) {
+            return \Illuminate\Cache\RateLimiting\Limit::perMinute(15)->by($request->user()?->id ?: $request->ip());
+        });
+
+        \Illuminate\Support\Facades\RateLimiter::for('export', function (\Illuminate\Http\Request $request) {
+            return \Illuminate\Cache\RateLimiting\Limit::perMinute(10)->by($request->user()?->id ?: $request->ip());
+        });
     }
 }

@@ -12,89 +12,89 @@
 **Goal:** Working intelligence loop for new product ideas
 
 ### Core Infrastructure
-- [ ] Laravel project scaffold with module architecture
-- [ ] Docker development environment (Sail)
-- [ ] Database migrations for all MVP tables
-- [ ] Authentication (Google + GitHub OAuth)
-- [ ] Session management
-- [ ] Basic routing and Inertia setup
+- [x] Laravel project scaffold with module architecture
+- [x] Docker development environment (Sail)
+- [x] Database migrations for all MVP tables
+- [x] Authentication (Google + GitHub OAuth)
+- [x] Session management
+- [x] Basic routing and Inertia setup
 
 ### AI System
-- [ ] AI provider abstraction layer
-- [ ] Anthropic provider implementation
-- [ ] OpenAI provider implementation
-- [ ] Workload router (LIGHT/STANDARD/DEEP)
-- [ ] AI output validation
-- [ ] Provider fallback logic
+- [x] AI provider abstraction layer
+- [x] Anthropic provider implementation
+- [x] OpenAI provider implementation
+- [x] Workload router (LIGHT/STANDARD/DEEP)
+- [x] AI output validation
+- [x] Provider fallback logic
 
 ### Credit System
-- [ ] Credit account model
-- [ ] Credit reservation / consumption / refund
-- [ ] Concurrent access safety (row-level locking)
-- [ ] Credit balance display
-- [ ] Cost estimation before operations
+- [x] Credit account model
+- [x] Credit reservation / consumption / refund
+- [x] Concurrent access safety (row-level locking)
+- [x] Credit balance display
+- [x] Cost estimation before operations
 
 ### Billing System
-- [ ] Plan and entitlement models
-- [ ] Entitlement service (capability checks)
-- [ ] Stripe integration (checkout, webhooks)
-- [ ] Subscription lifecycle (create, cancel, upgrade, downgrade)
-- [ ] Webhook idempotency
-- [ ] Free plan provisioning on signup
+- [x] Plan and entitlement models
+- [x] Entitlement service (capability checks)
+- [x] Stripe integration (checkout, webhooks)
+- [x] Subscription lifecycle (create, cancel, upgrade, downgrade)
+- [x] Webhook idempotency
+- [x] Free plan provisioning on signup
 
 ### Project System
-- [ ] Project creation ("What are you trying to achieve?")
-- [ ] Situation classification engine
-- [ ] Project context model
-- [ ] User understanding engine (basic)
-- [ ] Project dashboard (list, view, archive)
-- [ ] Project ownership authorization
+- [x] Project creation ("What are you trying to achieve?")
+- [x] Situation classification engine
+- [x] Project context model
+- [x] User understanding engine (basic)
+- [x] Project dashboard (list, view, archive)
+- [x] Project ownership authorization
 
 ### Intelligence Loop
-- [ ] Workflow engine (stage management)
-- [ ] Dual mode (Automatic + Page-by-Page)
-- [ ] Stage: Understanding
-- [ ] Stage: Existence & Opportunity Discovery
-- [ ] Stage: Competitor Analysis
-- [ ] Stage: Market Research
-- [ ] Stage: Challenge & Recommendation
-- [ ] Stage: PRD Generation
-- [ ] Stage: Architecture Generation
-- [ ] Stage: Development Package Generation
+- [x] Workflow engine (stage management)
+- [x] Dual mode (Automatic + Page-by-Page)
+- [x] Stage: Understanding
+- [x] Stage: Existence & Opportunity Discovery
+- [x] Stage: Competitor Analysis
+- [x] Stage: Market Research
+- [x] Stage: Challenge & Recommendation
+- [x] Stage: PRD Generation
+- [x] Stage: Architecture Generation
+- [x] Stage: Development Package Generation
 
 ### Research System
-- [ ] Web research integration
-- [ ] Source collection with metadata
-- [ ] Source reliability classification
-- [ ] Evidence model with confidence levels
-- [ ] Evidence-source linking
+- [x] Web research integration
+- [x] Source collection with metadata
+- [x] Source reliability classification
+- [x] Evidence model with confidence levels
+- [x] Evidence-source linking
 
 ### Export System
-- [ ] PDF generation (basic)
-- [ ] AI development package download (ZIP)
-- [ ] Master prompt copy-to-clipboard
+- [x] PDF generation (basic)
+- [x] AI development package download (ZIP)
+- [x] Master prompt copy-to-clipboard
 
 ### UI
-- [ ] Design system implementation (Tailwind config + tokens)
-- [ ] Light mode + Dark mode
-- [ ] Application shell (sidebar, navigation)
-- [ ] Authentication pages
-- [ ] Dashboard
-- [ ] Project creation flow
-- [ ] Workflow stage views
-- [ ] Document viewer
-- [ ] Responsive design
+- [x] Design system implementation (Tailwind config + tokens)
+- [x] Light mode + Dark mode
+- [x] Application shell (sidebar, navigation)
+- [x] Authentication pages
+- [x] Dashboard
+- [x] Project creation flow
+- [x] Workflow stage views
+- [x] Document viewer
+- [x] Responsive design
 
 ### Admin
-- [ ] Basic admin panel (users, plans, credit overview)
+- [x] Basic admin panel (users, plans, credit overview)
 
 ### Testing
-- [ ] Authorization tests
-- [ ] Entitlement tests
-- [ ] Credit concurrency tests
-- [ ] Webhook idempotency tests
-- [ ] AI orchestration tests (with mocks)
-- [ ] Core workflow tests
+- [x] Authorization tests
+- [x] Entitlement tests
+- [x] Credit concurrency tests
+- [x] Webhook idempotency tests
+- [x] AI orchestration tests (with mocks)
+- [x] Core workflow tests
 
 ---
 
@@ -258,6 +258,56 @@
 
 ---
 
+## Phase 7 — Production Hardening, Launch Readiness & Operational Scale
+
+**Target:** Post-Phase 6  
+**Goal:** Enterprise resilience, asynchronous queue processing, security headers, E2E test suites, and container orchestration
+
+### Asynchronous Queue Processing & Real-Time Progress
+- [x] Dedicated workload queues (`ai`, `research`, `export`, `billing`, `default`)
+- [x] `ExecuteStageJob` with credit failure recovery
+- [x] Real-time polling `/projects/{project}/workflow/status`
+
+### Testing Rigor
+- [x] Vitest configuration (`vitest.config.ts`) and Vue component tests
+- [x] Playwright E2E configuration (`playwright.config.ts`) and user journey specs
+- [x] Full product lifecycle integration test (`FullProductJourneyTest.php`)
+
+### Security Hardening
+- [x] `SecurityHeadersMiddleware` (CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy)
+- [x] Named rate limiters (`auth`, `ai`, `export`)
+- [x] HMAC-signed temporary download URLs (30-min expiration)
+
+### Production Deployment & Container Orchestration
+- [x] Multi-stage `Dockerfile.production` (PHP 8.2-FPM Alpine + OPcache + Redis)
+- [x] `docker-compose.prod.yml` and production Nginx configuration
+- [x] Deep `/healthz` system diagnostic probe endpoint
+- [x] Automated deployment scripts (`deploy.sh`, `deploy.ps1`)
+
+---
+
+## Phase 8 — Unified API Keys Management & Launch Cutover
+
+**Target:** Final Launch Phase  
+**Goal:** Unified developer & AI provider credentials management, admin integration console, and automated disaster recovery
+
+### Unified API Keys Management
+- [x] Unified User API Keys Page (`/settings/api-keys`) integrating Platform REST tokens and BYOK credentials
+- [x] Clean tabbed interface with one-time secret reveals and scope controls
+- [x] Deprecated `/settings/byok` redirected seamlessly to `/settings/api-keys?tab=byok`
+
+### Admin Integrations & System Keys Dashboard
+- [x] Superadmin API Keys Console (`/admin/api-keys`)
+- [x] Real-time live connectivity testing and latency benchmarks for Anthropic, OpenAI, Gemini, Stripe, and GitHub
+- [x] Masked credentials and environment variable auditing
+
+### Disaster Recovery & Production Readiness
+- [x] `.env.production.example` secrets template with production defaults
+- [x] Point-in-time database and storage snapshot scripts (`backup.sh`, `backup.ps1`)
+- [x] Structured JSON logging channel (`config/logging.php`)
+
+---
+
 ## Success Milestones
 
 | Milestone | Criteria |
@@ -268,7 +318,10 @@
 | **Growth** | Phase 4 complete; 2,000+ users; referral system active |
 | **Scale** | Phase 5 complete; enterprise customers; API revenue |
 | **Governance & Trust** | Phase 6 complete; GDPR/CCPA portability; self-learning AI engine |
+| **Production Hardening** | Phase 7 complete; async workers; E2E tests; CSP; Docker orchestration |
+| **Launch Readiness** | Phase 8 complete; unified API keys; admin console; backup automation; live-ready |
 
 ---
 
 *Roadmap timelines are estimates. Phases may be adjusted based on user feedback, technical discoveries, and business priorities.*
+

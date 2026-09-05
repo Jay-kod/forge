@@ -51,16 +51,9 @@ const logout = () => {
                         <Link
                             :href="route('api-keys.index')"
                             class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                            :class="route().current('api-keys.*') ? 'bg-surface-elevated text-indigo-400 font-semibold shadow-xs border border-primary' : 'text-text-secondary hover:text-text-primary hover:bg-surface-tertiary'"
+                            :class="route().current('api-keys.*') || route().current('byok.*') ? 'bg-surface-elevated text-indigo-400 font-semibold shadow-xs border border-primary' : 'text-text-secondary hover:text-text-primary hover:bg-surface-tertiary'"
                         >
-                            API Keys
-                        </Link>
-                        <Link
-                            :href="route('byok.index')"
-                            class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                            :class="route().current('byok.*') ? 'bg-surface-elevated text-indigo-400 font-semibold shadow-xs border border-primary' : 'text-text-secondary hover:text-text-primary hover:bg-surface-tertiary'"
-                        >
-                            BYOK
+                            🔑 API Keys
                         </Link>
                         <Link
                             :href="route('privacy.index')"
@@ -76,14 +69,22 @@ const logout = () => {
                         >
                             Plans & Credits
                         </Link>
-                        <Link
-                            v-if="page.props.auth.user?.role === 'admin'"
-                            :href="route('admin.dashboard')"
-                            class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                            :class="route().current('admin.*') ? 'bg-amber-500/15 text-amber-400 font-semibold border border-amber-500/30' : 'text-amber-400/80 hover:text-amber-400 hover:bg-surface-tertiary'"
-                        >
-                            ⚡ Admin Operations
-                        </Link>
+                        <div v-if="page.props.auth.user?.role === 'admin'" class="flex items-center gap-1 pl-2 border-l border-amber-500/30">
+                            <Link
+                                :href="route('admin.dashboard')"
+                                class="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                                :class="route().current('admin.dashboard') ? 'bg-amber-500/15 text-amber-400 font-semibold border border-amber-500/30' : 'text-amber-400/80 hover:text-amber-400 hover:bg-surface-tertiary'"
+                            >
+                                ⚡ Admin
+                            </Link>
+                            <Link
+                                :href="route('admin.api-keys.index')"
+                                class="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                                :class="route().current('admin.api-keys.*') ? 'bg-amber-500/15 text-amber-400 font-semibold border border-amber-500/30' : 'text-amber-400/80 hover:text-amber-400 hover:bg-surface-tertiary'"
+                            >
+                                🔑 System Keys
+                            </Link>
+                        </div>
                     </nav>
                 </div>
 
@@ -182,14 +183,7 @@ const logout = () => {
                         @click="isMobileMenuOpen = false"
                         class="block px-3 py-2 rounded-lg text-xs font-semibold text-text-primary hover:bg-surface-tertiary"
                     >
-                        🔑 API Keys
-                    </Link>
-                    <Link
-                        :href="route('byok.index')"
-                        @click="isMobileMenuOpen = false"
-                        class="block px-3 py-2 rounded-lg text-xs font-semibold text-text-primary hover:bg-surface-tertiary"
-                    >
-                        🔐 BYOK Credentials
+                        🔑 API Keys & Integrations
                     </Link>
                     <Link
                         :href="route('privacy.index')"
@@ -205,14 +199,22 @@ const logout = () => {
                     >
                         Plans & Credits
                     </Link>
-                    <Link
-                        v-if="page.props.auth.user?.role === 'admin'"
-                        :href="route('admin.dashboard')"
-                        @click="isMobileMenuOpen = false"
-                        class="block px-3 py-2 rounded-lg text-xs font-semibold text-amber-400 hover:bg-surface-tertiary"
-                    >
-                        ⚡ Admin Operations
-                    </Link>
+                    <template v-if="page.props.auth.user?.role === 'admin'">
+                        <Link
+                            :href="route('admin.dashboard')"
+                            @click="isMobileMenuOpen = false"
+                            class="block px-3 py-2 rounded-lg text-xs font-semibold text-amber-400 hover:bg-surface-tertiary"
+                        >
+                            ⚡ Admin Operations
+                        </Link>
+                        <Link
+                            :href="route('admin.api-keys.index')"
+                            @click="isMobileMenuOpen = false"
+                            class="block px-3 py-2 rounded-lg text-xs font-semibold text-amber-400 hover:bg-surface-tertiary"
+                        >
+                            🔑 Admin System Keys
+                        </Link>
+                    </template>
                 </div>
 
                 <div class="pt-3 border-t border-primary">

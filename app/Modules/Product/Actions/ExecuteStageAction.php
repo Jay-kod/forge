@@ -17,6 +17,8 @@ use App\Modules\Product\Models\WorkflowStage;
 use App\Modules\Projects\Enums\ProjectStatus;
 use App\Modules\Projects\Models\Project;
 use App\Modules\Research\Services\WebsiteAnalysisService;
+use App\Modules\Blueprint\Contracts\BlueprintServiceInterface;
+use App\Modules\Strategy\Contracts\StrategyServiceInterface;
 use Illuminate\Support\Str;
 
 class ExecuteStageAction
@@ -27,8 +29,13 @@ class ExecuteStageAction
         protected WebsiteAnalysisService $websiteAnalysisService,
         protected RepositoryScannerService $repositoryScannerService,
         protected TechnicalDebtAuditor $technicalDebtAuditor,
-        protected CodeOpportunityGenerator $codeOpportunityGenerator
-    ) {}
+        protected CodeOpportunityGenerator $codeOpportunityGenerator,
+        protected ?StrategyServiceInterface $strategyService = null,
+        protected ?BlueprintServiceInterface $blueprintService = null
+    ) {
+        $this->strategyService = $strategyService ?? app(StrategyServiceInterface::class);
+        $this->blueprintService = $blueprintService ?? app(BlueprintServiceInterface::class);
+    }
 
     /**
      * Execute stage intelligence and advance workflow to next stage.
@@ -43,7 +50,6 @@ class ExecuteStageAction
             'discovery',
             'research',
             'competitors',
-            'challenge',
             'business_analysis',
             'geographic_research',
             'market_comparison',
@@ -328,6 +334,96 @@ class ExecuteStageAction
             $stage->update([
                 'status' => 'completed',
                 'content' => ['summary' => 'Modernization & refactoring roadmap generated.', 'document_type' => 'refactor_roadmap'],
+                'completed_at' => now(),
+            ]);
+        } elseif ($stageType === 'challenge') {
+            if (!$project->discovery()->exists() || !$project->evidence()->exists()) {
+                $this->runDiscoveryAction->execute($user, $project);
+            }
+
+            $challengeResult = $this->strategyService->challengeAssumptions($user, $project);
+
+            $challengeMd = "# Analysis & Assumption Challenge: {$project->title}\n\n"
+                . "## Defensibility Risk Rating: " . round($challengeResult->overallRiskScore * 100) . "%\n\n"
+                . "### Executive Pre-Mortem Summary\n{$challengeResult->summary}\n\n"
+                . "### Key Assumptions Challenged\n";
+
+            foreach ($challengeResult->challenges as $c) {
+                $challengeMd .= "#### [{$c['severity']}] {$c['assumption']}\n"
+                    . "- **Challenge:** {$c['challenge']}\n"
+                    . "- **Evidence Reference:** " . ($c['evidence_ref'] ?? 'Market landscape') . "\n"
+                    . "- **Recommended Action:** {$c['recommended_action']}\n\n";
+            }
+
+            ProductDocument::updateOrCreate(
+                ['project_id' => $project->id, 'type' => 'challenge'],
+                [
+                    'title' => "Analysis & Challenge: {$project->title}",
+                    'content' => $challengeMd,
+                    'version' => 1,
+                    'status' => 'approved',
+                ]
+            );
+
+            $stage->update([
+                'status' => 'completed',
+                'content' => [
+                    'summary' => $challengeResult->summary,
+                    'overall_risk_score' => $challengeResult->overallRiskScore,
+                    'challenges' => $challengeResult->challenges,
+                    'defensibility_flags' => $challengeResult->defensibilityFlags,
+                    'document_type' => 'challenge',
+                ],
+                'completed_at' => now(),
+            ]);
+        } elseif ($stageType === 'strategy') {
+            $strategyResult = $this->strategyService->generateStrategy($user, $project);
+
+            ProductDocument::updateOrCreate(
+                ['project_id' => $project->id, 'type' => 'strategy'],
+                [
+                    'title' => "Strategic Recommendation: {$project->title}",
+                    'content' => $strategyResult->markdownReport,
+                    'version' => 1,
+                    'status' => 'approved',
+                ]
+            );
+
+            $stage->update([
+                'status' => 'completed',
+                'content' => [
+                    'summary' => $strategyResult->rationale,
+                    'recommendation' => $strategyResult->recommendation->value,
+                    'recommendation_label' => $strategyResult->recommendation->label(),
+                    'posture_title' => $strategyResult->postureTitle,
+                    'core_differentiators' => $strategyResult->coreDifferentiators,
+                    'go_to_market_steps' => $strategyResult->go_to_market_steps,
+                    'moats' => $strategyResult->moats,
+                    'document_type' => 'strategy',
+                ],
+                'completed_at' => now(),
+            ]);
+        } elseif ($stageType === 'package' || $stageType === 'export') {
+            $devPackage = $this->blueprintService->generatePackage($user, $project);
+
+            ProductDocument::updateOrCreate(
+                ['project_id' => $project->id, 'type' => 'package'],
+                [
+                    'title' => "AI Development Package: {$project->title}",
+                    'content' => $devPackage->masterPrompt,
+                    'version' => 1,
+                    'status' => 'approved',
+                ]
+            );
+
+            $stage->update([
+                'status' => 'completed',
+                'content' => [
+                    'summary' => "AI Development Package synthesized with " . count($devPackage->files) . " specification artifacts.",
+                    'file_count' => count($devPackage->files),
+                    'files' => array_map(fn($f) => ['path' => $f->path, 'description' => $f->description], $devPackage->files),
+                    'document_type' => 'package',
+                ],
                 'completed_at' => now(),
             ]);
         } else {

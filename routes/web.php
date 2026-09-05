@@ -7,10 +7,14 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\GitHubController;
+use App\Http\Controllers\HealthCheckController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ResearchController;
 use App\Http\Controllers\WorkflowController;
 use Illuminate\Support\Facades\Route;
+
+// Health Check (Public, for Kubernetes / Docker / load-balancer probes)
+Route::get('/healthz', HealthCheckController::class)->name('healthz');
 
 // Public / Guest Routes
 Route::get('/', function () {
@@ -19,7 +23,7 @@ Route::get('/', function () {
         : redirect()->route('login');
 });
 
-Route::middleware('guest')->group(function () {
+Route::middleware(['guest', 'throttle:auth'])->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::get('/auth/{provider}/redirect', [AuthController::class, 'redirect'])->name('auth.redirect');
     Route::get('/auth/{provider}/callback', [AuthController::class, 'callback'])->name('auth.callback');
@@ -42,13 +46,14 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
     Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
     Route::post('/projects/{project}/archive', [ProjectController::class, 'archive'])->name('projects.archive');
-    Route::post('/projects/{project}/research/refresh', [ResearchController::class, 'refresh'])->name('research.refresh');
+    Route::post('/projects/{project}/research/refresh', [ResearchController::class, 'refresh'])->name('research.refresh')->middleware('throttle:ai');
 
     // Workflow Stages & Decisions
-    Route::post('/projects/{project}/stages/{stage}/advance', [WorkflowController::class, 'advance'])->name('workflow.advance');
+    Route::get('/projects/{project}/workflow/status', [WorkflowController::class, 'status'])->name('workflow.status');
+    Route::post('/projects/{project}/stages/{stage}/advance', [WorkflowController::class, 'advance'])->name('workflow.advance')->middleware('throttle:ai');
     Route::post('/projects/{project}/stages/{stage}/approve', [WorkflowController::class, 'approve'])->name('workflow.approve');
     Route::post('/projects/{project}/stages/{stage}/decide', [WorkflowController::class, 'decide'])->name('workflow.decide');
-    Route::post('/projects/{project}/stages/{stage}/rerun', [\App\Http\Controllers\ProjectVersionController::class, 'rerun'])->name('workflow.rerun');
+    Route::post('/projects/{project}/stages/{stage}/rerun', [\App\Http\Controllers\ProjectVersionController::class, 'rerun'])->name('workflow.rerun')->middleware('throttle:ai');
 
     // Project Versions & Decision Timeline
     Route::get('/projects/{project}/versions', [\App\Http\Controllers\ProjectVersionController::class, 'index'])->name('projects.versions.index');
@@ -93,10 +98,14 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/billing/checkout', [BillingController::class, 'checkout'])->name('billing.checkout');
     Route::get('/billing/portal', [BillingController::class, 'portal'])->name('billing.portal');
 
-    // Exports
-    Route::get('/projects/{project}/export/package', [ExportController::class, 'downloadPackage'])->name('export.package');
-    Route::get('/projects/{project}/export/pdf', [ExportController::class, 'downloadPdf'])->name('export.pdf');
-    Route::get('/projects/{project}/export/growth-plan', [ExportController::class, 'downloadGrowthPlanPdf'])->name('export.growth-plan');
+    // Exports & Signed Temporary Download Links
+    Route::post('/projects/{project}/export/signed-url', [ExportController::class, 'generateSignedUrl'])->name('export.signed-url');
+    Route::get('/projects/{project}/export/package', [ExportController::class, 'downloadPackage'])->name('export.package')->middleware('throttle:export');
+    Route::get('/projects/{project}/export/pdf', [ExportController::class, 'downloadPdf'])->name('export.pdf')->middleware('throttle:export');
+    Route::get('/projects/{project}/export/growth-plan', [ExportController::class, 'downloadGrowthPlanPdf'])->name('export.growth-plan')->middleware('throttle:export');
+    Route::get('/projects/{project}/export/package/signed', [ExportController::class, 'downloadPackage'])->name('export.package.signed')->middleware('signed');
+    Route::get('/projects/{project}/export/pdf/signed', [ExportController::class, 'downloadPdf'])->name('export.pdf.signed')->middleware('signed');
+    Route::get('/projects/{project}/export/growth-plan/signed', [ExportController::class, 'downloadGrowthPlanPdf'])->name('export.growth-plan.signed')->middleware('signed');
 
     // GitHub Repository Integration
     Route::get('/integrations/github/connect', [GitHubController::class, 'connect'])->name('github.connect');
@@ -111,5 +120,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [AdminController::class, 'dashboard'])->name('admin.dashboard');
         Route::post('/users/{user}/credits', [AdminController::class, 'grantCredits'])->name('admin.users.credits');
         Route::post('/users/{user}/role', [AdminController::class, 'updateRole'])->name('admin.users.role');
+        Route::get('/api-keys', [\App\Http\Controllers\AdminApiKeyController::class, 'index'])->name('admin.api-keys.index');
+        Route::post('/api-keys/test', [\App\Http\Controllers\AdminApiKeyController::class, 'testConnection'])->name('admin.api-keys.test');
     });
 });

@@ -5,12 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Modules\Billing\Models\Plan;
-use App\Modules\Credits\Contracts\CreditServiceInterface;
-use App\Modules\Credits\Models\CreditAccount;
-use App\Modules\Credits\Models\CreditTransaction;
+use App\Modules\Admin\Services\AdminService;
 use App\Modules\Identity\Enums\UserRole;
-use App\Modules\Projects\Models\Project;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -19,7 +15,7 @@ use Inertia\Response;
 class AdminController extends Controller
 {
     public function __construct(
-        protected CreditServiceInterface $creditService
+        protected AdminService $adminService
     ) {}
 
     /**
@@ -28,26 +24,8 @@ class AdminController extends Controller
     public function dashboard(Request $request): Response
     {
         $search = $request->query('search');
-
-        $usersQuery = User::with(['creditAccount', 'subscription.plan'])
-            ->orderByDesc('created_at');
-
-        if (!empty($search)) {
-            $usersQuery->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
-            });
-        }
-
-        $users = $usersQuery->paginate(15)->withQueryString();
-
-        $stats = [
-            'total_users' => User::count(),
-            'total_projects' => Project::count(),
-            'total_credits_balance' => (int) CreditAccount::sum('balance'),
-            'total_credits_consumed' => (int) CreditAccount::sum('lifetime_consumed'),
-            'plans' => Plan::withCount('subscriptions')->get(),
-        ];
+        $users = $this->adminService->getPaginatedUsers($search);
+        $stats = $this->adminService->getDashboardStats();
 
         return Inertia::render('Admin/Dashboard', [
             'users' => $users,
@@ -67,14 +45,13 @@ class AdminController extends Controller
         ]);
 
         $amount = (int) $validated['amount'];
-        $reason = $validated['reason'] ?? 'Admin manual grant';
+        $reason = $validated['reason'] ?? null;
 
-        $this->creditService->grant(
+        $this->adminService->grantCredits(
+            admin: $request->user(),
             user: $user,
             amount: $amount,
-            referenceType: 'admin_grant',
-            referenceId: 'admin_' . $request->user()->id,
-            description: $reason
+            reason: $reason
         );
 
         return back()->with('success', "Successfully granted {$amount} credits to {$user->name}.");
@@ -89,9 +66,8 @@ class AdminController extends Controller
             'role' => ['required', 'in:user,admin'],
         ]);
 
-        $user->update([
-            'role' => $validated['role'] === 'admin' ? UserRole::ADMIN : UserRole::USER,
-        ]);
+        $role = $validated['role'] === 'admin' ? UserRole::ADMIN : UserRole::USER;
+        $this->adminService->updateUserRole($user, $role);
 
         return back()->with('success', "Updated role for {$user->name} to {$validated['role']}.");
     }

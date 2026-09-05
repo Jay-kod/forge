@@ -13,11 +13,14 @@ use Illuminate\Http\Request;
 class ApiKeyManagementController extends Controller
 {
     public function __construct(
-        protected ApiKeyService $apiKeyService
-    ) {}
+        protected ApiKeyService $apiKeyService,
+        protected ?\App\Modules\AI\Services\ByokService $byokService = null
+    ) {
+        $this->byokService = $byokService ?? app(\App\Modules\AI\Services\ByokService::class);
+    }
 
     /**
-     * List active API keys for the user.
+     * List active API keys and BYOK credentials for the user.
      */
     public function index(Request $request): JsonResponse|\Inertia\Response
     {
@@ -33,9 +36,14 @@ class ApiKeyManagementController extends Controller
             ]);
         }
 
+        $byokCredentials = $this->byokService->listCredentials($request->user());
+
         return \Inertia\Inertia::render('Settings/ApiKeys', [
             'api_keys' => $keys,
+            'byok_credentials' => $byokCredentials,
+            'supported_providers' => \App\Modules\AI\Services\ByokService::SUPPORTED_PROVIDERS,
             'organizations' => $request->user()->organizations()->get(['organizations.id', 'organizations.name']),
+            'initial_tab' => $request->query('tab', 'platform'),
         ]);
     }
 

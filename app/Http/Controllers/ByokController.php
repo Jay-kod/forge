@@ -18,7 +18,7 @@ class ByokController extends Controller
     /**
      * List registered BYOK credentials (all keys masked).
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): JsonResponse|\Illuminate\Http\RedirectResponse
     {
         $orgId = $request->query('organization_id');
         $org = null;
@@ -38,11 +38,7 @@ class ByokController extends Controller
             ]);
         }
 
-        return \Inertia\Inertia::render('Settings/Byok', [
-            'supported_providers' => ByokService::SUPPORTED_PROVIDERS,
-            'credentials' => $credentials,
-            'organizations' => $request->user()->organizations()->get(['organizations.id', 'organizations.name']),
-        ]);
+        return redirect()->route('api-keys.index', ['tab' => 'byok']);
     }
 
     /**
