@@ -53,32 +53,18 @@ const logout = () => {
         class="hidden md:flex flex-col h-screen sticky top-0 shrink-0 z-40 transition-all duration-300 ease-in-out border-r border-primary bg-surface-secondary select-none"
         :class="collapsed ? 'w-20' : 'w-64'"
     >
-        <!-- Top macOS Window Controls & Hamburger Header -->
-        <div class="p-3.5 flex items-center justify-between border-b border-primary/50">
+        <!-- Top macOS Window Controls Header -->
+        <div class="h-12 px-4 flex items-center border-b border-primary/50">
             <!-- macOS Window Dots (Inspired by Reference Screenshot) -->
             <div class="flex items-center gap-1.5" :class="{ 'mx-auto': collapsed }">
                 <span class="w-3 h-3 rounded-full bg-[#ff5f56] border border-[#e0443e]/30 shadow-xs inline-block"></span>
                 <span class="w-3 h-3 rounded-full bg-[#ffbd2e] border border-[#dea123]/30 shadow-xs inline-block"></span>
                 <span class="w-3 h-3 rounded-full bg-[#27c93f] border border-[#1aab29]/30 shadow-xs inline-block"></span>
             </div>
-
-            <!-- Hamburger Button inside Sidebar -->
-            <button
-                v-if="!collapsed"
-                type="button"
-                @click="toggleSidebar"
-                class="p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-tertiary transition-colors"
-                title="Collapse sidebar"
-                aria-label="Collapse sidebar"
-            >
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-            </button>
         </div>
 
-        <!-- Brand Identity Section & Hamburger for Collapsed Rail -->
-        <div class="px-3.5 py-3 flex items-center justify-between border-b border-primary/40 overflow-hidden">
+        <!-- Brand Identity Section -->
+        <div class="px-3.5 py-3 flex items-center border-b border-primary/40 overflow-hidden">
             <Link :href="route('projects.index')" class="flex items-center gap-2.5 group shrink-0" :class="{ 'mx-auto': collapsed }">
                 <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-emerald-500 flex items-center justify-center text-white font-display font-extrabold text-base shadow-md group-hover:scale-105 transition-transform shrink-0">
                     F
@@ -88,19 +74,6 @@ const logout = () => {
                     <span class="text-[9px] uppercase tracking-widest text-emerald-400 font-mono font-medium">Product Intelligence</span>
                 </div>
             </Link>
-
-            <!-- Hamburger button when collapsed -->
-            <button
-                v-if="collapsed"
-                type="button"
-                @click="toggleSidebar"
-                class="hidden p-1 rounded-md text-text-secondary hover:text-text-primary"
-                title="Expand sidebar"
-            >
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-            </button>
         </div>
 
         <!-- Navigation Links -->
