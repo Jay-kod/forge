@@ -19,7 +19,7 @@ Route::get('/healthz', HealthCheckController::class)->name('healthz');
 // Public / Guest Routes
 Route::get('/', function () {
     return auth()->check()
-        ? redirect()->route('projects.index')
+        ? redirect()->route('dashboard')
         : redirect()->route('login');
 });
 
@@ -42,6 +42,26 @@ Route::post('/webhook/stripe', [BillingController::class, 'webhook'])->name('web
 
 // Authenticated Application Routes
 Route::middleware(['auth'])->group(function () {
+    // LEVEL 1: Primary User Navigation
+    Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/discover', [\App\Http\Controllers\DiscoverController::class, 'index'])->name('discover');
+    Route::post('/discover', [\App\Http\Controllers\DiscoverController::class, 'submit'])->name('discover.submit');
+    Route::get('/opportunities', [\App\Http\Controllers\OpportunityController::class, 'index'])->name('opportunities.index');
+    Route::get('/research', [\App\Http\Controllers\ResearchCatalogController::class, 'index'])->name('research.index');
+    Route::get('/growth', [\App\Http\Controllers\GrowthController::class, 'index'])->name('growth.index');
+    Route::get('/github', [\App\Http\Controllers\GitHubController::class, 'index'])->name('github.index');
+
+    // LEVEL 1: Secondary Navigation
+    Route::get('/notifications', [\App\Http\Controllers\AlertController::class, 'index'])->name('notifications.index');
+    Route::get('/exports', [\App\Http\Controllers\ExportController::class, 'index'])->name('exports.index');
+
+    // LEVEL 1: Account Navigation
+    Route::get('/usage', [\App\Http\Controllers\UsageController::class, 'index'])->name('usage.index');
+    Route::get('/billing', [\App\Http\Controllers\BillingController::class, 'pricing'])->name('billing.index');
+    Route::get('/settings', [\App\Http\Controllers\SettingsController::class, 'index'])->name('settings.index');
+    Route::post('/settings/profile', [\App\Http\Controllers\SettingsController::class, 'updateProfile'])->name('settings.profile.update');
+    Route::get('/help', [\App\Http\Controllers\HelpController::class, 'index'])->name('help.index');
+
     // Projects
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
     Route::get('/projects/create', [ProjectController::class, 'create'])->name('projects.create');

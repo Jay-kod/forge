@@ -34,15 +34,26 @@ const logout = () => {
 
 const currentViewTitle = computed(() => {
     try {
-        if (route().current('projects.index')) return { title: 'Workspaces', icon: '🏠', subtitle: 'Product Intelligence' };
-        if (route().current('projects.create')) return { title: 'Launch Discovery', icon: '✨', subtitle: 'New Workspace' };
-        if (route().current('projects.show')) return { title: 'Project Workspace', icon: '⚡', subtitle: 'Stage Execution' };
+        if (route().current('dashboard')) return { title: 'Overview', icon: '⚡', subtitle: 'Platform Intelligence & Status' };
+        if (route().current('discover')) return { title: 'Discover', icon: '✨', subtitle: 'Intent-Driven Discovery Engine' };
+        if (route().current('projects.index')) return { title: 'Projects', icon: '📁', subtitle: 'Living Project Workspaces' };
+        if (route().current('projects.create')) return { title: 'Launch Discovery', icon: '🚀', subtitle: 'New Project Workspace' };
+        if (route().current('projects.show')) return { title: 'Project Workspace', icon: '🎯', subtitle: 'Stage Execution & Evidence' };
+        if (route().current('opportunities.*')) return { title: 'Opportunities', icon: '💡', subtitle: 'Cross-Project Opportunity Radar' };
+        if (route().current('research.*')) return { title: 'Research & Sources', icon: '🔬', subtitle: 'Traceable Evidence & Audits' };
+        if (route().current('growth.*')) return { title: 'Growth Center', icon: '📈', subtitle: 'Proactive Intelligence & Debt' };
+        if (route().current('github.*')) return { title: 'GitHub Integration', icon: '🐙', subtitle: 'Repository Health & Actions' };
+        if (route().current('notifications.*')) return { title: 'Notifications', icon: '🔔', subtitle: 'System & Opportunity Alerts' };
+        if (route().current('exports.*')) return { title: 'Generated Artifacts', icon: '📦', subtitle: 'Blueprints, Packages & PDFs' };
+        if (route().current('usage.*')) return { title: 'Usage & Capacity', icon: '⚡', subtitle: 'Credit Ledger & Workloads' };
+        if (route().current('billing.*') || route().current('pricing')) return { title: 'Billing & Plans', icon: '💳', subtitle: 'Entitlements & Subscriptions' };
+        if (route().current('settings.*')) return { title: 'Account Settings', icon: '⚙️', subtitle: 'Profile, Privacy & Credentials' };
+        if (route().current('help.*')) return { title: 'Help & Documentation', icon: '📖', subtitle: 'Guides & Architecture FAQ' };
         if (route().current('audit-logs.*') || route().current('organizations.audit-logs.*')) return { title: 'Audit Logs', icon: '📜', subtitle: 'Governance & Security' };
         if (route().current('organizations.*')) return { title: 'Teams & Organizations', icon: '🏢', subtitle: 'Multi-Tenant Management' };
         if (route().current('api-keys.*') || route().current('byok.*')) return { title: 'API Keys & BYOK', icon: '🔑', subtitle: 'Credentials & Tokens' };
         if (route().current('privacy.*')) return { title: 'Privacy & Data', icon: '🔒', subtitle: 'GDPR & Portability' };
-        if (route().current('pricing')) return { title: 'Plans & Credits', icon: '⚡', subtitle: 'Usage & Billing' };
-        if (route().current('admin.dashboard')) return { title: 'Admin Console', icon: '🛡️', subtitle: 'System Operations' };
+        if (route().current('admin.dashboard')) return { title: 'Admin Console', icon: '🛡️', subtitle: 'System Operations & KPI Radar' };
         if (route().current('admin.api-keys.*')) return { title: 'System API Keys', icon: '📡', subtitle: 'Connection Probes' };
     } catch {
         // fallback

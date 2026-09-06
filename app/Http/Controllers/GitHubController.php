@@ -18,6 +18,42 @@ class GitHubController extends Controller
     ) {}
 
     /**
+     * Display the GitHub intelligence & repository hub.
+     */
+    public function index(Request $request): \Inertia\Response
+    {
+        $user = $request->user();
+        $connection = $user->githubConnection;
+
+        $repositories = [];
+        if ($connection) {
+            try {
+                $repositories = $this->github->listUserRepositories($connection->access_token);
+            } catch (\Throwable $e) {
+                // Ignore API or rate limit errors; keep connection info
+            }
+        }
+
+        $audits = \App\Modules\GitHub\Models\RepositoryAudit::whereHas('project', fn ($q) => $q->where('user_id', $user->id))
+            ->with(['project:id,title,status'])
+            ->latest()
+            ->get();
+
+        return \Inertia\Inertia::render('GitHub/Index', [
+            'connection' => $connection ? [
+                'github_username' => $connection->github_username,
+                'avatar_url' => $connection->avatar_url,
+                'scope' => $connection->scope,
+                'has_repo_access' => str_contains($connection->scope ?? '', 'repo'),
+                'created_at' => $connection->created_at->toIso8601String(),
+            ] : null,
+            'repositories' => $repositories,
+            'audits' => $audits,
+            'projects' => $user->projects()->select('id', 'title')->get(),
+        ]);
+    }
+
+    /**
      * Redirect user to GitHub OAuth with repo scopes.
      */
     public function connect(Request $request): RedirectResponse

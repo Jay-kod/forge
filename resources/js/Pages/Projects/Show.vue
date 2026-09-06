@@ -53,8 +53,6 @@ const handleStageRerun = () => {
     router.reload({ only: ['project'] });
 };
 
-import { onMounted, onUnmounted } from 'vue';
-
 let pollInterval: any = null;
 
 const startPolling = () => {
@@ -90,6 +88,19 @@ const advanceStage = (stage: WorkflowStage) => {
 };
 
 onMounted(() => {
+    const handleHash = () => {
+        const hash = window.location.hash;
+        if (hash === '#graph') {
+            activeIntelligenceTab.value = 'graph';
+        } else if (hash === '#timeline' || hash === '#activity') {
+            activeIntelligenceTab.value = 'timeline';
+        } else if (['#overview', '#understanding', '#discovery', '#competitors', '#recommendations', '#research', '#strategy', '#github', '#exports'].includes(hash)) {
+            activeIntelligenceTab.value = 'overview';
+        }
+    };
+    handleHash();
+    window.addEventListener('hashchange', handleHash);
+
     if (props.project.workflow?.stages?.some((s: any) => s.status === 'processing')) {
         isRunning.value = true;
         startPolling();
@@ -140,7 +151,7 @@ const submitFeedback = async (stageType: string, rating: number) => {
         <Head :title="`${project.title} — Workspace`" />
 
         <!-- Project Header -->
-        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 pb-6 border-b border-primary">
+        <div id="overview" class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 pb-6 border-b border-primary">
             <div>
                 <div class="flex items-center gap-3 mb-1">
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-mono font-bold bg-indigo-500/15 border border-indigo-500/30 text-indigo-400">
@@ -159,7 +170,7 @@ const submitFeedback = async (stageType: string, rating: number) => {
             </div>
 
             <!-- Export Actions -->
-            <div class="flex flex-wrap items-center gap-2 shrink-0">
+            <div id="exports" class="flex flex-wrap items-center gap-2 shrink-0">
                 <button
                     @click="copyMasterPrompt"
                     class="px-3 py-2 rounded-xl border border-primary bg-surface-secondary hover:bg-surface-tertiary text-text-secondary hover:text-text-primary text-xs font-mono transition-colors"
@@ -219,23 +230,29 @@ const submitFeedback = async (stageType: string, rating: number) => {
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
             <!-- Left 2 Cols: Active Stage Detail, Verdict & Intelligence Output -->
             <div class="lg:col-span-2 space-y-6">
-                <!-- Discovery Verdict Card (when evaluated) -->
-                <DiscoveryVerdictCard :discovery="project.discovery" />
+                <!-- Discovery Verdict Card & Strategic Roadmap (when evaluated) -->
+                <div id="discovery">
+                    <div id="strategy">
+                        <DiscoveryVerdictCard :discovery="project.discovery" />
+                    </div>
+                </div>
 
                 <!-- Live Website Performance & UX Audit (when analyzed) -->
                 <WebsiteAuditCard :analysis="project.website_analysis" />
 
                 <!-- GitHub Repository Code Health & Architecture Audit -->
-                <RepositoryAuditCard
-                    v-if="currentAudit"
-                    :audit="currentAudit"
-                    :project="project"
-                    @open-export="showExportModal = true"
-                    @rescan="showGitHubModal = true"
-                />
+                <div id="github">
+                    <RepositoryAuditCard
+                        v-if="currentAudit"
+                        :audit="currentAudit"
+                        :project="project"
+                        @open-export="showExportModal = true"
+                        @rescan="showGitHubModal = true"
+                    />
+                </div>
 
                 <!-- Active Stage Card -->
-                <div v-if="activeStage" class="bg-surface-secondary border border-primary rounded-2xl p-6 shadow-md">
+                <div id="understanding" v-if="activeStage" class="bg-surface-secondary border border-primary rounded-2xl p-6 shadow-md">
                     <!-- Stage Header -->
                     <div class="flex items-center justify-between pb-4 border-b border-primary mb-6">
                         <div>
@@ -362,22 +379,28 @@ const submitFeedback = async (stageType: string, rating: number) => {
                 <!-- Tab 1: Matrices -->
                 <div v-show="activeIntelligenceTab === 'overview'" class="space-y-6">
                     <!-- Competitor Intelligence Matrix -->
-                    <CompetitorMatrix :competitors="project.competitors" />
+                    <div id="competitors">
+                        <CompetitorMatrix :competitors="project.competitors" />
+                    </div>
 
                     <!-- Action Priority Matrix (Opportunities) -->
-                    <OpportunityMatrix :opportunities="project.opportunities" />
+                    <div id="recommendations">
+                        <OpportunityMatrix :opportunities="project.opportunities" />
+                    </div>
 
                     <!-- Evidence & Research Registry -->
-                    <EvidenceRegistry :evidence="project.evidence" :project-id="project.id" />
+                    <div id="research">
+                        <EvidenceRegistry :evidence="project.evidence" :project-id="project.id" />
+                    </div>
                 </div>
 
                 <!-- Tab 2: Interactive Opportunity Graph -->
-                <div v-if="activeIntelligenceTab === 'graph'">
+                <div id="graph" v-if="activeIntelligenceTab === 'graph'">
                     <OpportunityGraph :project="project" />
                 </div>
 
                 <!-- Tab 3: Decision Timeline -->
-                <div v-if="activeIntelligenceTab === 'timeline'">
+                <div id="timeline" v-if="activeIntelligenceTab === 'timeline'">
                     <DecisionTimeline :project="project" @stage-rerun="handleStageRerun" />
                 </div>
             </div>
@@ -441,7 +464,7 @@ const submitFeedback = async (stageType: string, rating: number) => {
         </div>
 
         <!-- Full Document & Specification Viewer -->
-        <div class="mt-8">
+        <div id="documents" class="mt-8">
             <DocumentViewer
                 :documents="project.documents"
                 :project-title="project.title"

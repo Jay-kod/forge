@@ -33,6 +33,36 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
 
+        $currentProject = null;
+        $projectParam = $request->route('project');
+        if ($projectParam instanceof \App\Modules\Projects\Models\Project) {
+            $currentProject = [
+                'id' => $projectParam->id,
+                'title' => $projectParam->title,
+                'classification' => is_object($projectParam->classification) ? $projectParam->classification->value : (string) $projectParam->classification,
+                'status' => is_object($projectParam->status) ? $projectParam->status->value : (string) $projectParam->status,
+            ];
+        } elseif (is_numeric($projectParam) && $user) {
+            $p = \App\Modules\Projects\Models\Project::where('user_id', $user->id)->find($projectParam);
+            if ($p) {
+                $currentProject = [
+                    'id' => $p->id,
+                    'title' => $p->title,
+                    'classification' => is_object($p->classification) ? $p->classification->value : (string) $p->classification,
+                    'status' => is_object($p->status) ? $p->status->value : (string) $p->status,
+                ];
+            }
+        }
+
+        $entitlements = $user ? app(\App\Modules\Billing\Contracts\EntitlementServiceInterface::class) : null;
+        $capabilities = $user && $entitlements ? [
+            'can_create_project' => $entitlements->can($user, 'project.create'),
+            'can_export_package' => $entitlements->can($user, 'export.package'),
+            'can_export_growth' => $entitlements->can($user, 'export.growth_plan'),
+            'can_automatic_workflow' => $entitlements->can($user, 'workflow.automatic'),
+            'can_connect_github' => true,
+        ] : [];
+
         return [
             ...parent::share($request),
             'auth' => [
@@ -51,6 +81,15 @@ class HandleInertiaRequests extends Middleware
                     ? $user->creditAccount->balance 
                     : ($user ? 25 : 0),
             ],
+            'plan' => [
+                'name' => $user?->subscription?->plan?->name ?? 'Free Tier',
+                'slug' => $user?->subscription?->plan?->slug ?? 'free',
+                'is_pro' => in_array($user?->subscription?->plan?->slug ?? '', ['pro', 'growth', 'enterprise'], true),
+                'status' => $user?->subscription?->status ?? 'active',
+            ],
+            'capabilities' => $capabilities,
+            'current_project' => $currentProject,
+            'has_github' => $user ? $user->githubConnection()->exists() : false,
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

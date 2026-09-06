@@ -115,7 +115,7 @@ class ProjectApiController extends Controller
             'organization:id,name',
             'context',
             'workflow.stages',
-            'versions' => fn($q) => $q->orderByDesc('version_number')->limit(5),
+            'versions' => fn($q) => $q->orderByDesc('version')->limit(5),
         ]);
 
         return response()->json([

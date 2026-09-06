@@ -24,7 +24,7 @@ class ProjectTest extends TestCase
             'mode' => 'page_by_page',
         ]);
 
-        $project = Project::first();
+        $project = Project::where('user_id', $user->id)->first();
 
         $this->assertNotNull($project);
         $this->assertEquals($user->id, $project->user_id);
@@ -64,7 +64,7 @@ class ProjectTest extends TestCase
             'mode' => 'page_by_page',
         ]);
 
-        $project = Project::first();
+        $project = Project::where('user_id', $user->id)->first();
 
         $this->assertNotNull($project);
         $this->assertNotNull($project->websiteAnalysis);

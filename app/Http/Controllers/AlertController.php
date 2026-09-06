@@ -16,15 +16,25 @@ class AlertController extends Controller
     ) {}
 
     /**
-     * List user alerts and unread count.
+     * List user alerts and unread count, or render Notifications page.
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): JsonResponse|\Inertia\Response
     {
         $user = $request->user();
 
-        return response()->json([
-            'alerts' => $this->alertService->getAlertsForUser($user),
-            'unread_count' => $this->alertService->getUnreadCount($user),
+        if ($request->wantsJson() && !$request->header('X-Inertia')) {
+            return response()->json([
+                'alerts' => $this->alertService->getAlertsForUser($user),
+                'unread_count' => $this->alertService->getUnreadCount($user),
+            ]);
+        }
+
+        return \Inertia\Inertia::render('Notifications/Index', [
+            'alerts' => Alert::where('user_id', $user->id)
+                ->with('project:id,title')
+                ->latest()
+                ->paginate(20),
+            'unreadCount' => $this->alertService->getUnreadCount($user),
         ]);
     }
 

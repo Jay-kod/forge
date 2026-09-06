@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
+        ]);
+
+        $middleware->append([
             \App\Http\Middleware\SecurityHeadersMiddleware::class,
         ]);
 

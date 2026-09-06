@@ -21,6 +21,23 @@ class ExportController extends Controller
         $this->blueprintService = $blueprintService ?? app(BlueprintServiceInterface::class);
     }
 
+    /**
+     * Display the exports and generated artifacts catalog.
+     */
+    public function index(Request $request): \Inertia\Response
+    {
+        $user = $request->user();
+
+        $projects = $user->projects()
+            ->with(['versions', 'repositoryAudit'])
+            ->latest()
+            ->get();
+
+        return \Inertia\Inertia::render('Exports/Index', [
+            'projects' => $projects,
+        ]);
+    }
+
     public function generateSignedUrl(Request $request, Project $project): \Illuminate\Http\JsonResponse
     {
         $this->authorize('view', $project);
